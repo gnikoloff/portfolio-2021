@@ -3,6 +3,7 @@ import OrbitControlsA from 'three-orbit-controls'
 const OrbitControls = OrbitControlsA(THREE)
 
 import ExtendMaterial from './ExtendMaterial'
+import TextureManager from './TextureManager'
 
 ExtendMaterial(THREE)
 
@@ -16,6 +17,10 @@ const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 1000)
 const renderer = new THREE.WebGLRenderer()
 const raycaster = new THREE.Raycaster()
+
+const texManager = new TextureManager({
+  size: Math.min(4096, renderer.capabilities.maxTextureSize)
+})
 
 renderer.setSize(viewportWidth, viewportHeight)
 renderer.setPixelRatio(dpr)
@@ -33,49 +38,23 @@ const totalWidth = 20
 const totalHeight = 20
 const totalDepth = 20
 
-console.log(THREE.ShaderChunk)
-
-const texCanvas = document.createElement('canvas')
-const texCtx = texCanvas.getContext('2d')
-texCanvas.width = Math.min(4096, renderer.capabilities.maxTextureSize)
-texCanvas.height = texCanvas.width / 16
-texCanvas.style.position = 'fixed'
-texCanvas.style.top = texCanvas.style.left = '24px'
-texCanvas.style.transform = 'scale(0.5)'
-texCanvas.style.transformOrigin = '0 0'
-document.body.appendChild(texCanvas)
-
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-texCtx.fillStyle = 'red'
-texCtx.fillRect(0, 0, texCanvas.width, texCanvas.height)
-texCtx.fillStyle = 'black'
-texCtx.font = `${texCanvas.width / texCanvas.height * 8}px monospace`
-texCtx.textAlign = 'center'
-const size = texCanvas.width / alphabet.length
-const scale = texCanvas.height / size
-alphabet.split('').map((char, i) => {
-  texCtx.save()
-  texCtx.translate(i * size + size / 2, texCanvas.height / 2 + texCanvas.width / texCanvas.height * 2)
-  texCtx.scale(1, scale)
-  texCtx.fillText(char.toLowerCase(), 0, 0)
-  texCtx.restore()
-  // texCtx.strokeRect(size * i, 0, size * i + size, texCanvas.height)
+alphabet.split('').map(char => {
+  texManager.addAtlasEntry(char.toUpperCase())
+  texManager.addAtlasEntry(char.toLowerCase())
 })
-
-
-const tex = new THREE.CanvasTexture(texCanvas)
 
 const mat = THREE.extendMaterial(THREE.MeshPhongMaterial, {
   uniforms: {
-    letterTexture: { value: tex },
+    letterTexture: { value: texManager.texture },
   },
   header: `
-    varying float v_letterOffsetX;
+    varying vec2 v_letterOffset;
     varying vec2 vUv;
   `,
   vertexHeader: `
     attribute float scale;
-    attribute float letterOffsetX;
+    attribute vec2 letterOffset;
 
     uniform mat3 uvTransform;
   `,
@@ -90,13 +69,12 @@ const mat = THREE.extendMaterial(THREE.MeshPhongMaterial, {
     },
     '@#include <uv_vertex>': `
       vUv = (uvTransform * vec3(uv, 1)).xy;
-      v_letterOffsetX = letterOffsetX;
+      v_letterOffset = letterOffset;
     `
   },
   fragment: {
     '@#include <map_fragment>': `
-      vec4 texelColor = vec4(vUv, 0.0, 1.0);
-      diffuseColor *= texture(letterTexture, vUv * vec2(1.0 / 26.0, 1.0) + vec2(v_letterOffsetX, 0.0));
+      diffuseColor *= texture(letterTexture, vUv * vec2(1.0 / 10.0, 1.0 / 10.0) + v_letterOffset);
     `
   },
 })
@@ -116,20 +94,19 @@ box.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, totalDepth / 2))
 // box.maxInstancedCount = numBoxes
 
 const scales = new Float32Array(numBoxes)
-const letterOffsets = new Float32Array(numBoxes)
+const letterOffsets = new Float32Array(numBoxes * 2)
 for (let i = 0; i < numBoxes; i++) {
   scales[i] = 1//Math.random()
-  const size = 1 / alphabet.length
-  letterOffsets[i] = Math.round(i % alphabet.length / alphabet.length / size) * size
+  // const size = 1 / 10
+  const size = 1 / 10
+  letterOffsets[i * 2 + 0] = Math.round(i % 10 / 10 / size) * size
+  letterOffsets[i * 2 + 1] = Math.round(i % 10 / 10 / size) * size
 }
 
 box.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
-box.setAttribute('letterOffsetX', new THREE.InstancedBufferAttribute(letterOffsets, 1))
+box.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
 
 const baseMaterial = THREE.extendMaterial(THREE.MeshPhongMaterial, {
-  uniforms: {
-    letterTexture: { value: tex },
-  },
   vertexHeader: `
     attribute float scale;
   `,
@@ -184,23 +161,30 @@ function updateFrame (ts = 0) {
 
   let instanceId
 
-  const size = 1 / alphabet.length
+  const size = 1 / 10
   if (intersection.length > 0) {
     instanceId = intersection[0] && intersection[0].instanceId
     for (let i = 0; i < numBoxes; i++) {
       if (i === instanceId) {
-        intersection[0].object.geometry.attributes.letterOffsetX.array[instanceId] = Math.round(Math.random() / size) * size
+        intersection[0].object.geometry.attributes.letterOffset.array[i * 2] = Math.round(i % 10 / 10 / size) * size
       } else {
-        mesh.geometry.attributes.letterOffsetX.array[i] = Math.round(i % alphabet.length / alphabet.length / size) * size
+        // mesh.geometry.attributes.letterOffset.array[i] = Math.round(i % 10 / 10 / size) * size
       }
     }
   } else {
     for (let i = 0; i < numBoxes; i++) {
-      mesh.geometry.attributes.letterOffsetX.array[i] = Math.round(i % alphabet.length / alphabet.length / size) * size
+      let texCoordsForB
+      if (i % 2 === 0) {
+        texCoordsForB = texManager.getEntryTexCoordinate('b')
+      } else {
+        texCoordsForB = texManager.getEntryTexCoordinate('B')
+      }
+      mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordsForB[0]
+      mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordsForB[1]
     }
   }
 
-  mesh.geometry.attributes.letterOffsetX.needsUpdate = true
+  mesh.geometry.attributes.letterOffset.needsUpdate = true
 
   renderer.render( scene, camera );
 
