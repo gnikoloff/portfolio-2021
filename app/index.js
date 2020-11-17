@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import OrbitControlsA from 'three-orbit-controls'
+
+import screens from './screens.json'
+
 const OrbitControls = OrbitControlsA(THREE)
 
 import ExtendMaterial from './ExtendMaterial'
@@ -12,10 +15,10 @@ const dpr = window.devicePixelRatio
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
 
-const mouse = new THREE.Vector2()
+const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 1000)
-const renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGLRenderer({ antialias: true })
 const raycaster = new THREE.Raycaster()
 
 const texManager = new TextureManager({
@@ -40,13 +43,20 @@ const totalDepth = 20
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 alphabet.split('').map(char => {
-  texManager.addAtlasEntry(char.toUpperCase())
-  texManager.addAtlasEntry(char.toLowerCase())
+  texManager.addAtlasEntry({ value: char.toUpperCase(), type: 'CHAR' })
+  texManager.addAtlasEntry({ value: char.toLowerCase(), type: 'CHAR' })
 })
+texManager.addAtlasEntry({ type: 'DECORATION' })
+
+// new THREE.TextureLoader().load('/assets/displacementmap2.jpg', tex => {
+//   mat.uniforms.bumpMap.value = tex
+//   baseMaterial.uniforms.bumpMap.value = tex
+// })
 
 const mat = THREE.extendMaterial(THREE.MeshPhongMaterial, {
   uniforms: {
     letterTexture: { value: texManager.texture },
+    bumpMap: { texture: null }
   },
   header: `
     varying vec2 v_letterOffset;
@@ -81,11 +91,10 @@ const mat = THREE.extendMaterial(THREE.MeshPhongMaterial, {
 
 console.log(mat)
 
-var light = new THREE.DirectionalLight( 0xffffff );
-light.position.set(0, 10, 10)
-light.castShadow = true
-light.shadow.camera.zoom = 2
-scene.add(light);
+const light = new THREE.PointLight( 0xaaaaaa, 1, 100 );
+// light.intensity = 0.7
+light.position.set(30, 10, 50 );
+scene.add( light );
 
 const numBoxes = totalWidth * totalHeight
 
@@ -96,19 +105,23 @@ box.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, totalDepth / 2))
 const scales = new Float32Array(numBoxes)
 const letterOffsets = new Float32Array(numBoxes * 2)
 for (let i = 0; i < numBoxes; i++) {
-  scales[i] = 1//Math.random()
-  // const size = 1 / 10
-  const size = 1 / 10
-  letterOffsets[i * 2 + 0] = Math.round(i % 10 / 10 / size) * size
-  letterOffsets[i * 2 + 1] = Math.round(i % 10 / 10 / size) * size
+  scales[i] = 1
+  scales[i] = 1 + Math.random() * 0.05
 }
 
 box.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
 box.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
 
 const baseMaterial = THREE.extendMaterial(THREE.MeshPhongMaterial, {
+  uniforms: {
+    bumpMap: { texture: null }
+  },
+  header: `
+    varying vec2 vUv;
+  `,
   vertexHeader: `
     attribute float scale;
+    uniform mat3 uvTransform;
   `,
   vertex: {
     'project_vertex': {
@@ -116,6 +129,9 @@ const baseMaterial = THREE.extendMaterial(THREE.MeshPhongMaterial, {
         vec4 mvPosition = vec4(1.0, 1.0, scale, 1.0) * vec4(transformed, 1.0);
       `,
     },
+    '@#include <uv_vertex>': `
+      vUv = (uvTransform * vec3(uv, 1)).xy;
+    `
   },
 })
 
@@ -128,8 +144,11 @@ const materials = [
   baseMaterial,
 ]
 const mesh = new THREE.InstancedMesh(box, materials, numBoxes)
+mesh.position.set(0, 0, -totalDepth / 2)
 mesh.castShadow = true
 mesh.receiveShadow = true
+
+getScreenData()
 
 const matrix = new THREE.Matrix4()
 for (let i = 0; i < numBoxes; i++) {
@@ -152,6 +171,34 @@ function onMouseMove (e) {
   mouse.y = - (e.clientY / viewportHeight) * 2 + 1
 }
 
+function getScreenData () {
+  Object.entries(screens).map(keyValue => {
+    const key = keyValue[0]
+    const { x, y } = keyValue[1]
+    const startIdx = x + totalWidth * (totalHeight - y)
+    for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
+      const texCoords = texManager.getEntryTexCoordinate(key[n])
+      mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
+      mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+      n++
+    }
+  })
+  for (let i = 0; i < numBoxes; i++) {
+    const xIdx = i % totalWidth
+    const yIdx = (i - xIdx) / totalHeight
+    if (xIdx === 0 || xIdx === totalWidth - 1 || yIdx === 0 || yIdx === totalHeight - 1) {
+      const texCoords = texManager.getEntryTexCoordinate('DECORATION')
+      mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
+      mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+    }
+  }
+  // for (let i = 0; i < numBoxes; i += totalWidth) {
+  //   const texCoords = texManager.getEntryTexCoordinate('DECORATION')
+  //   mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
+  //   mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+  // }
+}
+
 function updateFrame (ts = 0) {
   renderer.clearColor()
 
@@ -161,29 +208,34 @@ function updateFrame (ts = 0) {
 
   let instanceId
 
-  const size = 1 / 10
   if (intersection.length > 0) {
     instanceId = intersection[0] && intersection[0].instanceId
-    for (let i = 0; i < numBoxes; i++) {
-      if (i === instanceId) {
-        intersection[0].object.geometry.attributes.letterOffset.array[i * 2] = Math.round(i % 10 / 10 / size) * size
+    Object.entries(screens).map(keyValue => {
+      const key = keyValue[0]
+      const { x, y } = keyValue[1]
+      const startIdx = x + totalWidth * (totalHeight - y)
+
+      if (instanceId >= startIdx && instanceId < startIdx + key.length) {
+        document.body.classList.add('hovering')
+        for (let n = startIdx; n < startIdx + key.length; n++) {
+          mesh.geometry.attributes.scale.array[n] = 1.2
+        }
       } else {
-        // mesh.geometry.attributes.letterOffset.array[i] = Math.round(i % 10 / 10 / size) * size
+        document.body.classList.remove('hovering')
+        for (let i = 0; i < numBoxes; i++) {
+          // mesh.geometry.attributes.scale.array[i] = 1
+        }
       }
-    }
+    })
   } else {
     for (let i = 0; i < numBoxes; i++) {
-      let texCoordsForB
-      if (i % 2 === 0) {
-        texCoordsForB = texManager.getEntryTexCoordinate('b')
-      } else {
-        texCoordsForB = texManager.getEntryTexCoordinate('B')
-      }
-      mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordsForB[0]
-      mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordsForB[1]
+      // getScreenData()
+      // mesh.geometry.attributes.scale.array[i] = 1
     }
+    
   }
 
+  mesh.geometry.attributes.scale.needsUpdate = true
   mesh.geometry.attributes.letterOffset.needsUpdate = true
 
   renderer.render( scene, camera );

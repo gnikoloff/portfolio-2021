@@ -6,7 +6,7 @@
   "scripts": {
     "watch": "parcel watch app/index.html",
     "serve": "browser-sync start --s dist --port 8080",
-    "start": "npm-run-all --parallel watch serve"
+    "start": "cp -R ./app/assets ./dist/assets && npm-run-all --parallel watch serve"
   },
   "repository": {
     "type": "git",
