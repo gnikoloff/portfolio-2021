@@ -7,6 +7,11 @@ const OrbitControls = OrbitControlsA(THREE)
 
 import ExtendMaterial from './ExtendMaterial'
 import TextureManager from './TextureManager'
+import CubeView from './CubeView'
+
+import {
+  VIEW_HOME
+} from './constants'
 
 ExtendMaterial(THREE)
 
@@ -14,6 +19,9 @@ const dpr = window.devicePixelRatio
 
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
+
+let activeView1 = VIEW_HOME
+let activeView2 = null
 
 const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
@@ -41,125 +49,30 @@ const totalWidth = 20
 const totalHeight = 20
 const totalDepth = 20
 
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-alphabet.split('').map(char => {
-  texManager.addAtlasEntry({ value: char.toUpperCase(), type: 'CHAR' })
-  texManager.addAtlasEntry({ value: char.toLowerCase(), type: 'CHAR' })
-})
-texManager.addAtlasEntry({ type: 'DECORATION' })
+// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+// const specialChars = '.'
 
-// new THREE.TextureLoader().load('/assets/displacementmap2.jpg', tex => {
-//   mat.uniforms.bumpMap.value = tex
-//   baseMaterial.uniforms.bumpMap.value = tex
+// alphabet.split('').map(char => {
+//   texManager.addAtlasEntry({ value: char.toUpperCase(), type: 'CHAR' })
+//   texManager.addAtlasEntry({ value: char.toLowerCase(), type: 'CHAR' })
 // })
+// specialChars.split('').map(char => texManager.addAtlasEntry({ value: char, type: 'CHAR' }))
+// texManager.addAtlasEntry({ type: 'DECORATION' })
 
-const mat = THREE.extendMaterial(THREE.MeshPhongMaterial, {
-  uniforms: {
-    letterTexture: { value: texManager.texture },
-    bumpMap: { texture: null }
-  },
-  header: `
-    varying vec2 v_letterOffset;
-    varying vec2 vUv;
-  `,
-  vertexHeader: `
-    attribute float scale;
-    attribute vec2 letterOffset;
+// texManager.addAtlasEntry({ type: 'WORD_LINE', value: 'Focus.de' })
+// texManager.addAtlasEntry({ type: 'WORD_LINE', value: 'WebGL Showcase Shop' })
 
-    uniform mat3 uvTransform;
-  `,
-  fragmentHeader: `
-    uniform sampler2D letterTexture;
-  `,
-  vertex: {
-    'project_vertex': {
-      '@vec4 mvPosition = vec4( transformed, 1.0 );': `
-        vec4 mvPosition = vec4(1.0, 1.0, scale, 1.0) * vec4(transformed, 1.0);
-      `,
-    },
-    '@#include <uv_vertex>': `
-      vUv = (uvTransform * vec3(uv, 1)).xy;
-      v_letterOffset = letterOffset;
-    `
-  },
-  fragment: {
-    '@#include <map_fragment>': `
-      diffuseColor *= texture(letterTexture, vUv * vec2(1.0 / 10.0, 1.0 / 10.0) + v_letterOffset);
-    `
-  },
+// getScreenData()
+
+const view1 = new CubeView({
+  radius: 20,
+  lightPosition: new THREE.Vector3(700, 700, 700),
+  textureManager: texManager
 })
 
-console.log(mat)
+view1.drawScreen(screens['works'])
 
-const light = new THREE.PointLight( 0xaaaaaa, 1, 100 );
-// light.intensity = 0.7
-light.position.set(30, 10, 50 );
-scene.add( light );
-
-const numBoxes = totalWidth * totalHeight
-
-const box = new THREE.BoxBufferGeometry(1, 1, totalDepth)
-box.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, totalDepth / 2))
-// box.maxInstancedCount = numBoxes
-
-const scales = new Float32Array(numBoxes)
-const letterOffsets = new Float32Array(numBoxes * 2)
-for (let i = 0; i < numBoxes; i++) {
-  scales[i] = 1
-  scales[i] = 1 + Math.random() * 0.05
-}
-
-box.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
-box.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
-
-const baseMaterial = THREE.extendMaterial(THREE.MeshPhongMaterial, {
-  uniforms: {
-    bumpMap: { texture: null }
-  },
-  header: `
-    varying vec2 vUv;
-  `,
-  vertexHeader: `
-    attribute float scale;
-    uniform mat3 uvTransform;
-  `,
-  vertex: {
-    'project_vertex': {
-      '@vec4 mvPosition = vec4( transformed, 1.0 );': `
-        vec4 mvPosition = vec4(1.0, 1.0, scale, 1.0) * vec4(transformed, 1.0);
-      `,
-    },
-    '@#include <uv_vertex>': `
-      vUv = (uvTransform * vec3(uv, 1)).xy;
-    `
-  },
-})
-
-const materials = [
-  baseMaterial,
-  baseMaterial,
-  baseMaterial,
-  baseMaterial,
-  mat,
-  baseMaterial,
-]
-const mesh = new THREE.InstancedMesh(box, materials, numBoxes)
-mesh.position.set(0, 0, -totalDepth / 2)
-mesh.castShadow = true
-mesh.receiveShadow = true
-
-getScreenData()
-
-const matrix = new THREE.Matrix4()
-for (let i = 0; i < numBoxes; i++) {
-  const xIdx = i % totalWidth
-  const yIdx = (i - xIdx) / totalHeight
-  const x = xIdx - totalWidth / 2
-  const y = yIdx - totalHeight / 2
-  matrix.setPosition(x, y, 0)
-  mesh.setMatrixAt(i, matrix)
-}
-scene.add(mesh)
+scene.add(view1.mesh)
 
 new OrbitControls(camera)
 document.body.addEventListener('mousemove', onMouseMove)
@@ -204,39 +117,38 @@ function updateFrame (ts = 0) {
 
   raycaster.setFromCamera(mouse, camera)
 
-  const intersection = raycaster.intersectObject(mesh)
+  const intersection = raycaster.intersectObject(view1.mesh)
 
   let instanceId
 
   if (intersection.length > 0) {
     instanceId = intersection[0] && intersection[0].instanceId
-    Object.entries(screens).map(keyValue => {
-      const key = keyValue[0]
-      const { x, y } = keyValue[1]
-      const startIdx = x + totalWidth * (totalHeight - y)
+    // Object.entries(screens).map(keyValue => {
+    //   const key = keyValue[0]
+    //   const { x, y } = keyValue[1]
+    //   const startIdx = x + totalWidth * (totalHeight - y)
 
-      if (instanceId >= startIdx && instanceId < startIdx + key.length) {
-        document.body.classList.add('hovering')
-        for (let n = startIdx; n < startIdx + key.length; n++) {
-          mesh.geometry.attributes.scale.array[n] = 1.2
-        }
-      } else {
-        document.body.classList.remove('hovering')
-        for (let i = 0; i < numBoxes; i++) {
-          // mesh.geometry.attributes.scale.array[i] = 1
-        }
-      }
-    })
+    //   if (instanceId >= startIdx && instanceId < startIdx + key.length) {
+    //     document.body.classList.add('hovering')
+    //     for (let n = startIdx; n < startIdx + key.length; n++) {
+    //       mesh.geometry.attributes.scale.array[n] = 1.2
+    //     }
+    //   } else {
+    //     document.body.classList.remove('hovering')
+    //     for (let i = 0; i < numBoxes; i++) {
+    //       // mesh.geometry.attributes.scale.array[i] = 1
+    //     }
+    //   }
+    // })
   } else {
-    for (let i = 0; i < numBoxes; i++) {
+    // for (let i = 0; i < numBoxes; i++) {
       // getScreenData()
       // mesh.geometry.attributes.scale.array[i] = 1
-    }
+    // }
     
   }
 
-  mesh.geometry.attributes.scale.needsUpdate = true
-  mesh.geometry.attributes.letterOffset.needsUpdate = true
+  view1.onUpdateFrame()
 
   renderer.render( scene, camera );
 

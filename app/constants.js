@@ -1,0 +1,7 @@
+export const VIEW_HOME = 'home'
+
+export const ENTRY_TYPE_INDIVIDUAL_CHAR = 'INDIVIDUAL_CHAR'
+export const ENTRY_TYPE_WORD_LINE = 'WORD_LINE'
+export const ENTRY_TYPE_SYMBOL_DOT = 'DOT'
+
+export const DECORATION_TYPE_BORDER = 'BORDER_DECORATION'

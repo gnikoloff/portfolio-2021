@@ -1,18 +1,39 @@
 {
-  "GEORGI NIKOLOV": {
-    "x": 3,
-    "y": 3
+  "home": {
+    "GEORGI NIKOLOV": {
+      "x": 3,
+      "y": 3,
+      "type": "INDIVIDUAL_CHAR"
+    },
+    "PersonalWebsite": {
+      "x": 2,
+      "y": 5,
+      "type": "INDIVIDUAL_CHAR"
+    },
+    "Projects": {
+      "x": 6,
+      "y": 10,
+      "type": "INDIVIDUAL_CHAR"
+    },
+    "Info": {
+      "x": 8,
+      "y": 12,
+      "type": "INDIVIDUAL_CHAR"
+    }
   },
-  "Personal Website": {
-    "x": 2,
-    "y": 5
-  },
-  "Projects": {
-    "x": 6,
-    "y": 10
-  },
-  "Info": {
-    "x": 8,
-    "y": 12
+  "works": {
+    "BORDER_DECORATION": {
+      "type": "CROSS"
+    },
+    "GEORGI NIKOLOV": {
+      "x": 3,
+      "y": 3,
+      "type": "INDIVIDUAL_CHAR"
+    },
+    "Personal Website": {
+      "x": 7,
+      "y": 5,
+      "type": "WORD_LINE"
+    }
   }
 }
