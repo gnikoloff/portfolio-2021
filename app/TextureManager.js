@@ -118,7 +118,7 @@ export default class TextureManager {
 
     this._texCtx.save()
     this._texCtx.fillStyle = 'black'
-    this._texCtx.font = `${300}px monospace`
+    this._texCtx.font = `${298}px monospace`
 
     const textMetrics = this._texCtx.measureText(entry.value)
     

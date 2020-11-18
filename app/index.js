@@ -115,40 +115,13 @@ function getScreenData () {
 function updateFrame (ts = 0) {
   renderer.clearColor()
 
-  raycaster.setFromCamera(mouse, camera)
+  
 
-  const intersection = raycaster.intersectObject(view1.mesh)
-
-  let instanceId
-
-  if (intersection.length > 0) {
-    instanceId = intersection[0] && intersection[0].instanceId
-    // Object.entries(screens).map(keyValue => {
-    //   const key = keyValue[0]
-    //   const { x, y } = keyValue[1]
-    //   const startIdx = x + totalWidth * (totalHeight - y)
-
-    //   if (instanceId >= startIdx && instanceId < startIdx + key.length) {
-    //     document.body.classList.add('hovering')
-    //     for (let n = startIdx; n < startIdx + key.length; n++) {
-    //       mesh.geometry.attributes.scale.array[n] = 1.2
-    //     }
-    //   } else {
-    //     document.body.classList.remove('hovering')
-    //     for (let i = 0; i < numBoxes; i++) {
-    //       // mesh.geometry.attributes.scale.array[i] = 1
-    //     }
-    //   }
-    // })
-  } else {
-    // for (let i = 0; i < numBoxes; i++) {
-      // getScreenData()
-      // mesh.geometry.attributes.scale.array[i] = 1
-    // }
-    
-  }
-
-  view1.onUpdateFrame()
+  view1.onUpdateFrame({
+    raycaster,
+    mouse,
+    camera
+  })
 
   renderer.render( scene, camera );
 

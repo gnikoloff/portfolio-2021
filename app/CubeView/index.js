@@ -24,14 +24,16 @@ export default class CubeView {
     this._radius = radius
     this._numBoxes = radius * radius
 
+    this._screenData = null
+
     this._geometry = new THREE.BoxBufferGeometry(1, 1, this._radius)
     this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, this._radius / 2))
 
     const scales = new Float32Array(this._numBoxes)
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     for (let i = 0; i < this._numBoxes; i++) {
-      scales[i] = 1
-      // scales[i] = Math.random()
+      // scales[i] = 1
+      scales[i] = Math.random() * 0.05 + 1
     }
 
     this._geometry.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
@@ -83,6 +85,7 @@ export default class CubeView {
   }
   
   drawScreen (screenData) {
+    this._screenData = screenData
     Object.entries(screenData).map(keyValue => {
       const key = keyValue[0]
       const { x, y, type } = keyValue[1]
@@ -122,7 +125,75 @@ export default class CubeView {
     })
   }
 
-  onUpdateFrame () {
+  onUpdateFrame ({
+    raycaster,
+    mouse,
+    camera
+  }) {
+    raycaster.setFromCamera(mouse, camera)
+
+    const intersection = raycaster.intersectObject(this._mesh)
+
+    let instanceId
+
+    if (intersection.length > 0) {
+      instanceId = intersection[0] && intersection[0].instanceId
+      const instanceXIdx = instanceId % this._radius
+      const instanceYIdx = this._radius - (instanceId - instanceXIdx) / this._radius
+
+      let isHovering = false
+      Object.entries(this._screenData).forEach(keyValue => {
+        const key = keyValue[0]
+        const { x, y, type, isHoverable = false } = keyValue[1]
+
+        if (key === DECORATION_TYPE_BORDER) {
+          return
+        }
+
+        if (!isHoverable) {
+          return
+        }
+
+        if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
+          if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
+            const startIdx = x + this._radius * (this._radius - y)
+            for (let n = startIdx; n < startIdx + key.length; n++) {
+              this._mesh.geometry.attributes.scale.array[n] = 1.2
+            }
+            isHovering = true
+          }
+        } else if (type === ENTRY_TYPE_WORD_LINE) {
+          const entry = {
+            value: key, x, y, type
+          }
+          const startIdx = x + this._radius * (this._radius - y)
+          const texCoords = this._textureManager.getEntryTexCoordinate(entry)
+          if (instanceXIdx >= x && instanceXIdx < x + texCoords.length && instanceYIdx === y) {
+            for (let i = startIdx; i < startIdx + texCoords.length; i++) {
+              this._mesh.geometry.attributes.scale.array[i] = 1.2
+            }
+            isHovering = true
+          }
+        }        
+      })
+
+      if (isHovering) {
+        if (!document.body.classList.contains('hovering')) {
+          document.body.classList.add('hovering')
+        }
+      } else {
+        if (document.body.classList.contains('hovering')) {
+          document.body.classList.remove('hovering')
+        }
+        for (let i = 0; i < this._numBoxes; i++) {
+          // this._mesh.geometry.attributes.scale.array[i] = 1
+        }
+      }
+    } else {
+      
+      
+    }
+
     this._mesh.geometry.attributes.scale.needsUpdate = true
     this._mesh.geometry.attributes.letterOffset.needsUpdate = true
   }
