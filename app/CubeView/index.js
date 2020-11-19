@@ -1,10 +1,18 @@
 import * as THREE from 'three'
 
+import eventEmitter from '../event-emitter'
+import store from '../store'
+
+import {
+  setEntryHover,
+} from '../store/actions'
+
 import {
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
   ENTRY_TYPE_SYMBOL_DOT,
   DECORATION_TYPE_BORDER,
+  EVT_HOVER_MENU_ITEM,
 } from '../constants'
 
 import vertexShaderFront from './vertex-shader-front.glsl'
@@ -23,23 +31,23 @@ export default class CubeView {
     this._textureManager = textureManager
     this._radius = radius
     this._numBoxes = radius * radius
+    this._interactable = false
 
     this._screenData = null
 
     this._geometry = new THREE.BoxBufferGeometry(1, 1, this._radius)
-    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, this._radius / 2))
+    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, this._radius / 3))
 
     const scales = new Float32Array(this._numBoxes)
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     for (let i = 0; i < this._numBoxes; i++) {
-      // scales[i] = 1
-      scales[i] = Math.random()
+      scales[i] = 1
+      // scales[i] = Math.random()
     }
 
     this._geometry.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
     this._geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
     
-    console.log(lightPosition)
     this._frontMaterial = new THREE.ShaderMaterial({
       uniforms: {
         lightPosition: { value: lightPosition },
@@ -94,13 +102,31 @@ export default class CubeView {
       `,
       fragmentShader: THREE.ShaderLib.shadow.fragmentShader,
     })
-    console.log(THREE.ShaderLib)
   }
   get mesh () {
     return this._mesh
   }
+  set interactable (interactable) {
+    console.log('setting interactable from outside', interactable)
+    this._interactable = interactable
+  }
+
+  set rotation (newRotation) {
+    this._mesh.rotation.set(...newRotation)
+  }
+
+  get rotation () {
+    return this._mesh.rotation
+  }
+
+  clearScreen () {
+    this._screenData = null
+  }
   
   drawScreen (screenData) {
+    if (!screenData) {
+      return
+    }
     this._screenData = screenData
     Object.entries(screenData).map(keyValue => {
       const key = keyValue[0]
@@ -157,57 +183,89 @@ export default class CubeView {
       const instanceXIdx = instanceId % this._radius
       const instanceYIdx = this._radius - (instanceId - instanceXIdx) / this._radius
 
-      let isHovering = false
-      Object.entries(this._screenData).forEach(keyValue => {
-        const key = keyValue[0]
-        const { x, y, type, isHoverable = false } = keyValue[1]
 
-        if (key === DECORATION_TYPE_BORDER) {
-          return
-        }
+      let hoveredItem
 
-        if (!isHoverable) {
-          return
-        }
+      if (this._screenData) {
 
-        if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
-          if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
+        
+        Object.entries(this._screenData).forEach(keyValue => {
+          const key = keyValue[0]
+          const { x, y, type, linksTo, isHoverable = false } = keyValue[1]
+
+
+          if (key === DECORATION_TYPE_BORDER) {
+            return
+          }
+
+          if (!isHoverable) {
+            return
+          }
+
+          if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
+            if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
+              const startIdx = x + this._radius * (this._radius - y)
+              for (let n = startIdx; n < startIdx + key.length; n++) {
+                this._mesh.geometry.attributes.scale.array[n] = 1.2
+              }
+              hoveredItem = { key, linksTo }
+            }
+          } else if (type === ENTRY_TYPE_WORD_LINE) {
+            const entry = {
+              value: key, x, y, type
+            }
             const startIdx = x + this._radius * (this._radius - y)
-            for (let n = startIdx; n < startIdx + key.length; n++) {
-              this._mesh.geometry.attributes.scale.array[n] = 1.2
+            const texCoords = this._textureManager.getEntryTexCoordinate(entry)
+            if (instanceXIdx >= x && instanceXIdx < x + texCoords.length && instanceYIdx === y) {
+              for (let i = startIdx; i < startIdx + texCoords.length; i++) {
+                this._mesh.geometry.attributes.scale.array[i] = 1.2
+              }
+              hoveredItem = { key, linksTo }
             }
-            isHovering = true
-          }
-        } else if (type === ENTRY_TYPE_WORD_LINE) {
-          const entry = {
-            value: key, x, y, type
-          }
-          const startIdx = x + this._radius * (this._radius - y)
-          const texCoords = this._textureManager.getEntryTexCoordinate(entry)
-          if (instanceXIdx >= x && instanceXIdx < x + texCoords.length && instanceYIdx === y) {
-            for (let i = startIdx; i < startIdx + texCoords.length; i++) {
-              this._mesh.geometry.attributes.scale.array[i] = 1.2
-            }
-            isHovering = true
-          }
-        }        
-      })
+          }        
+        })
 
-      if (isHovering) {
-        if (!document.body.classList.contains('hovering')) {
-          document.body.classList.add('hovering')
-        }
-      } else {
-        if (document.body.classList.contains('hovering')) {
-          document.body.classList.remove('hovering')
-        }
-        for (let i = 0; i < this._numBoxes; i++) {
-          // this._mesh.geometry.attributes.scale.array[i] = 1
-        }
+        // if (hoveredItem) {
+        //   if (!document.body.classList.contains('hovering')) {
+        //     document.body.classList.add('hovering')
+        //   }
+        // } else {
+        //   if (document.body.classList.contains('hovering')) {
+        //     document.body.classList.remove('hovering')
+        //   }
+        //   store.dispatch(setEntryHover(null))
+        //   for (let i = 0; i < this._numBoxes; i++) {
+        //     // this._mesh.geometry.attributes.scale.array[i] = 1
+        //   }
+        // }
       }
+      // console.log(hoveredItem, oldHoveredItem)
+
+      // console.log(hoveredItem)
+      
+      if (this._interactable) {
+        store.dispatch(setEntryHover(hoveredItem))
+      }
+
+      if (hoveredItem) {
+          if (!document.body.classList.contains('hovering')) {
+            document.body.classList.add('hovering')
+          }
+      } else {
+        // if (document.body.classList.contains('hovering')) {
+        //   document.body.classList.remove('hovering')
+        // }
+        // for (let i = 0; i < this._numBoxes; i++) {
+        //   this._mesh.geometry.attributes.scale.array[i] = 1
+        // }
+      }
+
+      
+      
     } else {
-      
-      
+      if (this._interactable) {
+        store.dispatch(setEntryHover(null))
+      }
     }
 
     this._mesh.geometry.attributes.scale.needsUpdate = true

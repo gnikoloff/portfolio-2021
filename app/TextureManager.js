@@ -123,7 +123,6 @@ export default class TextureManager {
     const textMetrics = this._texCtx.measureText(entry.value)
     
     const cellsOccupied = Math.ceil(textMetrics.width / this._cellWidth)
-    console.log(cellsOccupied)
 
     this._texCtx.strokeStyle = 'red'
     this._texCtx.lineWidth = 10

@@ -1,25 +1,27 @@
 import * as THREE from 'three'
 import OrbitControlsA from 'three-orbit-controls'
+import { animate } from 'popmotion'
 
 import screens from './screens.json'
 
 const OrbitControls = OrbitControlsA(THREE)
+
+import store from './store'
 
 import ExtendMaterial from './ExtendMaterial'
 import TextureManager from './TextureManager'
 import CubeView from './CubeView'
 
 import {
-  VIEW_HOME
+  VIEW_HOME,
+  EVT_HOVER_MENU_ITEM,
 } from './constants'
+import eventEmitter from './event-emitter.js'
 
 ExtendMaterial(THREE)
 
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
-
-let activeView1 = VIEW_HOME
-let activeView2 = null
 
 const domContainer = document.getElementById('app-container')
 const dpr = window.devicePixelRatio
@@ -48,7 +50,6 @@ light.shadow.camera.far = 2000;
 
 
 var helper = new THREE.DirectionalLightHelper(light)
-console.log(helper)
 scene.add(helper);
 
 scene.add(light);
@@ -86,29 +87,71 @@ const totalDepth = 20
 
 // getScreenData()
 
-const view1 = new CubeView({
+let viewA = new CubeView({
   radius: 20,
   lightPosition: light.position,
   textureManager: texManager
 })
-view1.drawScreen(screens['works'])
-const view2 = new CubeView({
+viewA.interactable = true
+viewA.drawScreen(screens[VIEW_HOME])
+
+let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position,
   textureManager: texManager,
-  rotation: [0, Math.PI * 0.5, 0]
+  rotation: [0, Math.PI, 0]
 })
 
-scene.add(view1.mesh)
-scene.add(view2.mesh)
+scene.add(viewA.mesh)
+scene.add(viewB.mesh)
 
 var helper = new THREE.CameraHelper(light.shadow.camera);
-  scene.add(helper);
+scene.add(helper);
 
+// eventEmitter.on(EVT_HOVER_MENU_ITEM, itemKey => {
+//   viewB.drawScreen(screens[itemKey])
+// })
 
 new OrbitControls(camera)
 document.body.addEventListener('mousemove', onMouseMove)
+document.body.addEventListener('click', onMouseClick)
 updateFrame()
+
+function onMouseClick () {
+  const { hoverEntryName } = store.getState()
+  viewB.drawScreen(screens[hoverEntryName.linksTo])
+
+  let targetRotationA = new THREE.Vector3()
+  let targetRotationB = new THREE.Vector3(0, Math.PI, 0)
+
+  targetRotationA.set(
+    0,
+    targetRotationA.y + Math.PI,
+    0
+  )
+  targetRotationB.set(
+    0,
+    targetRotationB.y + Math.PI,
+    0
+  )
+
+  animate({
+    onUpdate: v => {
+      viewA.rotation.set(...targetRotationA.toArray().map(a => a * v))
+      viewB.rotation.set(...targetRotationB.toArray().map(a => a * v))
+    },
+    onComplete: () => {
+      viewA.interactable = false
+      viewB.interactable = true
+      let temp = viewB
+      viewB = viewA
+      viewA = temp
+    }
+  })
+  
+  // viewA.interactable = true
+  // viewB.interactable = true
+}
 
 function onMouseMove (e) {
   e.preventDefault()
@@ -116,44 +159,16 @@ function onMouseMove (e) {
   mouse.y = - (e.clientY / viewportHeight) * 2 + 1
 }
 
-function getScreenData () {
-  Object.entries(screens).map(keyValue => {
-    const key = keyValue[0]
-    const { x, y } = keyValue[1]
-    const startIdx = x + totalWidth * (totalHeight - y)
-    for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
-      const texCoords = texManager.getEntryTexCoordinate(key[n])
-      mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-      mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
-      n++
-    }
-  })
-  for (let i = 0; i < numBoxes; i++) {
-    const xIdx = i % totalWidth
-    const yIdx = (i - xIdx) / totalHeight
-    if (xIdx === 0 || xIdx === totalWidth - 1 || yIdx === 0 || yIdx === totalHeight - 1) {
-      const texCoords = texManager.getEntryTexCoordinate('DECORATION')
-      mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-      mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
-    }
-  }
-  // for (let i = 0; i < numBoxes; i += totalWidth) {
-  //   const texCoords = texManager.getEntryTexCoordinate('DECORATION')
-  //   mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-  //   mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
-  // }
-}
-
 function updateFrame (ts = 0) {
   renderer.clearColor()
 
-  
-
-  view1.onUpdateFrame({
+  const opts = {
     raycaster,
     mouse,
     camera
-  })
+  }
+  viewA.onUpdateFrame(opts)
+  viewB.onUpdateFrame(opts)
 
   renderer.render( scene, camera );
 
