@@ -33,12 +33,13 @@ export default class CubeView {
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     for (let i = 0; i < this._numBoxes; i++) {
       // scales[i] = 1
-      scales[i] = Math.random() * 0.05 + 1
+      scales[i] = Math.random()
     }
 
     this._geometry.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
     this._geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
     
+    console.log(lightPosition)
     this._frontMaterial = new THREE.ShaderMaterial({
       uniforms: {
         lightPosition: { value: lightPosition },
@@ -49,10 +50,12 @@ export default class CubeView {
     })
 
     this._sideMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        // lightPosition: { value: new THREE.Vector3(700, 700, 700) },
+      uniforms: THREE.UniformsUtils.merge([{
+        lightPosition: {
+          value: lightPosition
+        },
         lightPosition: { value: lightPosition },
-      },
+      }]),
       vertexShader: vertexShaderSide,
       fragmentShader: fragmentShaderSide,
     })
@@ -68,6 +71,8 @@ export default class CubeView {
 
     this._mesh = new THREE.InstancedMesh(this._geometry, materials, this._numBoxes)
     this._mesh.rotation.set(...rotation)
+    this._mesh.castShadow = true
+    this._mesh.receiveShadow = true
     // this._mesh.position.set(0, 0, -this._radius / 2)
 
     const matrix = new THREE.Matrix4()
@@ -79,6 +84,17 @@ export default class CubeView {
       matrix.setPosition(x, y, 0)
       this._mesh.setMatrixAt(i, matrix)
     }
+    this._mesh.customDepthMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
+        attribute float scale;
+        void main () {
+            vec4 worldPosition = modelMatrix * instanceMatrix * vec4(vec3(1.0, 1.0, scale) * position, 1.0);
+            gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }
+      `,
+      fragmentShader: THREE.ShaderLib.shadow.fragmentShader,
+    })
+    console.log(THREE.ShaderLib)
   }
   get mesh () {
     return this._mesh

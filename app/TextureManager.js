@@ -37,7 +37,7 @@ export default class TextureManager {
       const drawX = xIdx * this._cellWidth
       const drawY = yIdx * this._cellWidth
       this._texCtx.strokeStyle = 'red'
-      this._texCtx.lineWidth = 10
+      this._texCtx.lineWidth = 50
       this._texCtx.strokeRect(drawX, drawY, this._cellWidth, this._cellWidth)
     }
   }
