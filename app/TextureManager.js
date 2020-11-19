@@ -110,11 +110,6 @@ export default class TextureManager {
     return texAtlasCoords
   }
   _drawWordLine (entry) {
-    this._atlasIdxX = 0
-    this._atlasIdxY++
-
-    const drawX = this._atlasIdxX
-    const drawY = this._atlasIdxY * this._cellWidth
 
     this._texCtx.save()
     this._texCtx.fillStyle = 'black'
@@ -123,6 +118,21 @@ export default class TextureManager {
     const textMetrics = this._texCtx.measureText(entry.value)
     
     const cellsOccupied = Math.ceil(textMetrics.width / this._cellWidth)
+    
+    // this._atlasIdX += cellsOccupied
+    // this._atlasIdxY += 1
+
+
+
+    // this._atlasIdxX++
+    
+    if (this._atlasIdxX + cellsOccupied > this._entriesPerRow) {
+      this._atlasIdxX = 0
+      this._atlasIdxY++
+    }
+
+    const drawX = this._atlasIdxX * this._cellWidth
+    const drawY = this._atlasIdxY * this._cellWidth
 
     this._texCtx.strokeStyle = 'red'
     this._texCtx.lineWidth = 10
@@ -131,19 +141,19 @@ export default class TextureManager {
     
     for (let i = 0; i < cellsOccupied; i++) {
       const x = drawX + i * this._cellWidth
-      const texAtlasX = i / this._entriesPerRow
+      const texAtlasX = this._atlasIdxX / this._entriesPerRow + i / this._entriesPerRow
       const texAtlasY = 1.0 - (this._atlasIdxY + 1) / this._entriesPerRow
       texAtlasesForLine.push([texAtlasX, texAtlasY])
       // this._texCtx.strokeRect(x, drawY, this._cellWidth, this._cellWidth)
     }
+    this._atlasIdxX += cellsOccupied
 
     this._texCtx.translate(drawX, drawY + this._cellWidth / 2 + 85)
     this._texCtx.fillText(entry.value, 0, 0)
     this._texCtx.restore()
 
     this._atlas.set(entry.value || entry.type, texAtlasesForLine)
-    
-    this._atlasIdxY++
+
 
     return texAtlasesForLine
   }
