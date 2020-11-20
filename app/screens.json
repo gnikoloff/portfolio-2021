@@ -17,7 +17,8 @@
       "x": 6,
       "y": 8,
       "type": "INDIVIDUAL_CHAR",
-      "isHoverable": true
+      "isHoverable": true,
+      "linksTo": "PROJECTS"
     },
     "INFO": {
       "x": 8,
@@ -30,21 +31,41 @@
       "x": 7,
       "y": 12,
       "type": "INDIVIDUAL_CHAR",
+      "isHoverable": true,
+      "linksTo": "SOCIAL"
+    },
+    "GET IN TOUCH": {
+      "x": 4,
+      "y": 17,
+      "type": "INDIVIDUAL_CHAR",
       "isHoverable": true
     }
   },
   "INFO": {
-    "MY PROJECTS": {
-      "x": 6,
-      "y": 8,
+    "A frontend developer from Berlin": {
+      "x": 2,
+      "y": 3,
       "type": "WORD_LINE",
       "linksTo": "HOME",
       "isHoverable": true
     },
-    "KJUR": {
-      "x": 6,
-      "y": 10,
-      "type": "INDIVIDUAL_CHAR"
+  },
+  "SOCIAL": {
+    "BACK": {
+      "x": 1,
+      "y": 2,
+      "type": "INDIVIDUAL_CHAR",
+      "linksTo": "HOME",
+      "isHoverable": true
+    }
+  },
+  "PROJECTS": {
+    "Focus.de": {
+      "x": 4,
+      "y": 4,
+      "type": "WORD_LINE",
+      "isHoverable": true,
+      "linksTo": "HOME"
     }
   }
 }

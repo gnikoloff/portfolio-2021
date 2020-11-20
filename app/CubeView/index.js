@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 
+import TextureManager from '../TextureManager'
 import eventEmitter from '../event-emitter'
 import store from '../store'
 
@@ -21,14 +22,15 @@ import fragmentShaderFront from './fragment-shader-front.glsl'
 import vertexShaderSide from './vertex-shader-side.glsl'
 import fragmentShaderSide from './fragment-shader-side.glsl'
 
+const HOVERED_SCALE = 1.1
+
 export default class CubeView {
   constructor ({
     radius,
     lightPosition,
-    textureManager,
     rotation = [0, 0, 0]
   }) {
-    this._textureManager = textureManager
+    this._textureManager = TextureManager.getInstance()
     this._radius = radius
     this._numBoxes = radius * radius
     this._interactable = false
@@ -36,7 +38,7 @@ export default class CubeView {
     this._screenData = null
 
     this._geometry = new THREE.BoxBufferGeometry(1, 1, this._radius)
-    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, this._radius / 3))
+    // this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0, this._radius / 2))
 
     const scales = new Float32Array(this._numBoxes)
     const letterOffsets = new Float32Array(this._numBoxes * 2)
@@ -47,11 +49,14 @@ export default class CubeView {
 
     this._geometry.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
     this._geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
+
+    const atlasTextureSize = new THREE.Vector2(this._textureManager.entriesPerRow, this._textureManager.entriesPerRow)
     
     this._frontMaterial = new THREE.ShaderMaterial({
       uniforms: {
         lightPosition: { value: lightPosition },
         letterTexture: { value: this._textureManager.texture },
+        atlasTextureSize: { value: atlasTextureSize },
       },
       vertexShader: vertexShaderFront,
       fragmentShader: fragmentShaderFront,
@@ -63,6 +68,7 @@ export default class CubeView {
           value: lightPosition
         },
         lightPosition: { value: lightPosition },
+        atlasTextureSize: { value: atlasTextureSize },
       }]),
       vertexShader: vertexShaderSide,
       fragmentShader: fragmentShaderSide,
@@ -81,6 +87,7 @@ export default class CubeView {
     this._mesh.rotation.set(...rotation)
     this._mesh.castShadow = true
     this._mesh.receiveShadow = true
+    this._mesh.visible = false
     // this._mesh.position.set(0, 0, -this._radius / 2)
 
     const matrix = new THREE.Matrix4()
@@ -106,13 +113,31 @@ export default class CubeView {
   get mesh () {
     return this._mesh
   }
+
+  set visible (visible) {
+    if (!visible) {
+      const texCoords = this._textureManager.getEntryTexCoordinate(' ')
+      for (let i = 0; i < this._numBoxes; i++) {
+        this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
+        this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+      }
+    }
+    this._mesh.visible = visible
+  }
+
   set interactable (interactable) {
-    console.log('setting interactable from outside', interactable)
+    if (!interactable) {
+      for (let i = 0; i < this._numBoxes; i++) {
+        this._mesh.geometry.attributes.scale.array[i] = 1
+      }
+    }
     this._interactable = interactable
   }
 
-  set rotation (newRotation) {
-    this._mesh.rotation.set(...newRotation)
+  addToRotation (rotation) {
+    this._mesh.rotation.x += rotation[0]
+    this._mesh.rotation.y += rotation[1]
+    this._mesh.rotation.z += rotation[2]
   }
 
   get rotation () {
@@ -125,8 +150,10 @@ export default class CubeView {
   
   drawScreen (screenData) {
     if (!screenData) {
+      throw new Error('Provided no view screenData')
       return
     }
+    console.log(screenData)
     this._screenData = screenData
     Object.entries(screenData).map(keyValue => {
       const key = keyValue[0]
@@ -161,7 +188,16 @@ export default class CubeView {
           if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
             this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
             this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+          } else if (i > 20 && i < 120) {
+            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
+            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
           }
+        }
+      } else {
+        const texCoords = this._textureManager.getEntryTexCoordinate(' ')
+        for (let i = 0; i < this._numBoxes; i++) {
+          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
+          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
         }
       }
     })
@@ -178,7 +214,7 @@ export default class CubeView {
 
     let instanceId
 
-    if (intersection.length > 0) {
+    if (intersection.length > 0 && this._interactable) {
       instanceId = intersection[0] && intersection[0].instanceId
       const instanceXIdx = instanceId % this._radius
       const instanceYIdx = this._radius - (instanceId - instanceXIdx) / this._radius
@@ -206,7 +242,7 @@ export default class CubeView {
             if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
               const startIdx = x + this._radius * (this._radius - y)
               for (let n = startIdx; n < startIdx + key.length; n++) {
-                this._mesh.geometry.attributes.scale.array[n] = 1.2
+                this._mesh.geometry.attributes.scale.array[n] = HOVERED_SCALE
               }
               hoveredItem = { key, linksTo }
             }
@@ -218,7 +254,7 @@ export default class CubeView {
             const texCoords = this._textureManager.getEntryTexCoordinate(entry)
             if (instanceXIdx >= x && instanceXIdx < x + texCoords.length && instanceYIdx === y) {
               for (let i = startIdx; i < startIdx + texCoords.length; i++) {
-                this._mesh.geometry.attributes.scale.array[i] = 1.2
+                this._mesh.geometry.attributes.scale.array[i] = HOVERED_SCALE
               }
               hoveredItem = { key, linksTo }
             }
@@ -252,12 +288,12 @@ export default class CubeView {
             document.body.classList.add('hovering')
           }
       } else {
-        // if (document.body.classList.contains('hovering')) {
-        //   document.body.classList.remove('hovering')
-        // }
-        // for (let i = 0; i < this._numBoxes; i++) {
-        //   this._mesh.geometry.attributes.scale.array[i] = 1
-        // }
+        if (document.body.classList.contains('hovering')) {
+          document.body.classList.remove('hovering')
+        }
+        for (let i = 0; i < this._numBoxes; i++) {
+          this._mesh.geometry.attributes.scale.array[i] = 1
+        }
       }
 
       

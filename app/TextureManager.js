@@ -4,16 +4,26 @@ import {
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
   ENTRY_TYPE_SYMBOL_DOT,
+  DECORATION_TYPE_BORDER,
 } from './constants'
 
+let instance
+
 export default class TextureManager {
-  constructor ({
-    size
-  } = {}) {
+  static init ({ size }) {
+    if (!instance) {
+      instance = new TextureManager(size)
+    }
+    return instance
+  }
+  static getInstance () {
+    return instance
+  }
+  constructor (size) {
     this._atlas = new Map()
     this._atlasIdxX = 0
     this._atlasIdxY = 0
-    this._entriesPerRow = 10
+    this._entriesPerRow = 20
 
     this._size = size
     this._cellWidth = this._size / this._entriesPerRow
@@ -37,19 +47,22 @@ export default class TextureManager {
       const drawX = xIdx * this._cellWidth
       const drawY = yIdx * this._cellWidth
       this._texCtx.strokeStyle = 'red'
-      this._texCtx.lineWidth = 50
+      this._texCtx.lineWidth = 20
       this._texCtx.strokeRect(drawX, drawY, this._cellWidth, this._cellWidth)
     }
   }
   get texture () {
     return this._texture
   }
+  get entriesPerRow () {
+    return this._entriesPerRow
+  }
   _drawChar (entry) {
     const drawX = this._atlasIdxX * this._cellWidth
     const drawY = this._atlasIdxY * this._cellWidth
     this._texCtx.save()
     this._texCtx.fillStyle = 'black'
-    this._texCtx.font = `${300}px monospace`
+    this._texCtx.font = `${150}px monospace`
     this._texCtx.textAlign = 'center'
     this._texCtx.translate(drawX + this._cellWidth / 2, drawY + this._cellWidth / 2 + 85)
     this._texCtx.fillText(entry.value, 0, 0)
@@ -113,7 +126,7 @@ export default class TextureManager {
 
     this._texCtx.save()
     this._texCtx.fillStyle = 'black'
-    this._texCtx.font = `${298}px monospace`
+    this._texCtx.font = `${150}px monospace`
 
     const textMetrics = this._texCtx.measureText(entry.value)
     
@@ -152,13 +165,18 @@ export default class TextureManager {
     this._texCtx.fillText(entry.value, 0, 0)
     this._texCtx.restore()
 
-    this._atlas.set(entry.value || entry.type, texAtlasesForLine)
+    this._atlas.set(entry.value, texAtlasesForLine)
 
 
     return texAtlasesForLine
   }
   _addAtlasEntry (entry) {
-    let texAtlasCoords
+    let texAtlasCoords = this._atlas.get(entry.value)
+    console.log(entry.value)
+    if (texAtlasCoords) {
+      console.log('no need to paint again, fetch from atlas')
+      return texAtlasCoords
+    }
     if (entry.type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
       texAtlasCoords = this._drawChar(entry)
     } else if (entry.type === ENTRY_TYPE_WORD_LINE) {
@@ -170,7 +188,13 @@ export default class TextureManager {
     return texAtlasCoords
   }
   getEntryTexCoordinate (entry) {
-    let texCoordinates = this._atlas.get(entry.value)
+    let texCoordinates
+    // TODO fix decoration logic
+    if (entry.type === ENTRY_TYPE_SYMBOL_DOT || entry.type === "CROSS") {
+      // texCoordinates = this._atlas.get(entry.type)
+    } else {
+      texCoordinates = this._atlas.get(entry.value)
+    }
     if (!texCoordinates) {
       texCoordinates = this._addAtlasEntry(entry)
       // throw new Error('cant find texture coordinate for this entry')

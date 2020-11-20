@@ -1,7 +1,7 @@
 attribute float scale;
 attribute vec2 letterOffset;
 
-varying vec2 v_letterOffset;
+varying vec2 vLetterOffset;
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vWorldPosition;
@@ -11,7 +11,7 @@ void main () {
   gl_Position = projectionMatrix * viewMatrix * worldPosition;
 
   vNormal = normalMatrix * normal;
-  v_letterOffset = letterOffset;
+  vLetterOffset = letterOffset;
   vUv = uv;
   vWorldPosition = worldPosition.xyz;
 }

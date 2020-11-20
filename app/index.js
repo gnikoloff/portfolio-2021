@@ -8,8 +8,8 @@ const OrbitControls = OrbitControlsA(THREE)
 
 import store from './store'
 
-import ExtendMaterial from './ExtendMaterial'
 import TextureManager from './TextureManager'
+import ExtendMaterial from './ExtendMaterial'
 import CubeView from './CubeView'
 
 import {
@@ -31,9 +31,7 @@ const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0
 const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: true })
 const raycaster = new THREE.Raycaster()
 
-const texManager = new TextureManager({
-  size: Math.min(4096, renderer.capabilities.maxTextureSize)
-})
+TextureManager.init({ size: Math.min(4096, renderer.capabilities.maxTextureSize) })
 
 var light = new THREE.DirectionalLight(0x000000, 1);
 light.position.set(30, 700, -500);
@@ -61,52 +59,31 @@ renderer.setPixelRatio(dpr)
 renderer.setClearColor(0xaaaaaa)
 renderer.shadowMap.enabled = true
 renderer.outputEncoding = THREE.sRGBEncoding
-document.body.appendChild(renderer.domElement)
+domContainer.appendChild(renderer.domElement)
 
 camera.position.set(0, 0, 70)
 camera.lookAt(new THREE.Vector3())
 
-// const boxOffsets = new Float32Array(numBoxes * 3)
-
-const totalWidth = 20
-const totalHeight = 20
-const totalDepth = 20
-
-// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-// const specialChars = '.'
-
-// alphabet.split('').map(char => {
-//   texManager.addAtlasEntry({ value: char.toUpperCase(), type: 'CHAR' })
-//   texManager.addAtlasEntry({ value: char.toLowerCase(), type: 'CHAR' })
-// })
-// specialChars.split('').map(char => texManager.addAtlasEntry({ value: char, type: 'CHAR' }))
-// texManager.addAtlasEntry({ type: 'DECORATION' })
-
-// texManager.addAtlasEntry({ type: 'WORD_LINE', value: 'Focus.de' })
-// texManager.addAtlasEntry({ type: 'WORD_LINE', value: 'WebGL Showcase Shop' })
-
-// getScreenData()
-
 let viewA = new CubeView({
   radius: 20,
-  lightPosition: light.position,
-  textureManager: texManager
+  lightPosition: light.position
 })
 viewA.interactable = true
+viewA.visible = true
 viewA.drawScreen(screens[VIEW_HOME])
 
 let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position,
-  textureManager: texManager,
   rotation: [0, Math.PI, 0]
 })
 
 scene.add(viewA.mesh)
 scene.add(viewB.mesh)
+console.log(viewA.mesh.rotation)
+console.log(viewB.mesh.rotation)
 
-var helper = new THREE.CameraHelper(light.shadow.camera);
-scene.add(helper);
+scene.add(new THREE.CameraHelper(light.shadow.camera))
 
 // eventEmitter.on(EVT_HOVER_MENU_ITEM, itemKey => {
 //   viewB.drawScreen(screens[itemKey])
@@ -117,28 +94,44 @@ document.body.addEventListener('mousemove', onMouseMove)
 document.body.addEventListener('click', onMouseClick)
 updateFrame()
 
-function onMouseClick () {
+function onMouseClick (e) {
   const { hoverEntryName } = store.getState()
+  if (!hoverEntryName) {
+    return
+  }
+
+  e.preventDefault()
+
+  document.title = `${hoverEntryName.linksTo.substring(0, 1)}${hoverEntryName.linksTo.substring(1).toLowerCase()} - Georgi Nikolov`
+  
   viewB.drawScreen(screens[hoverEntryName.linksTo])
 
-  let targetRotationA = new THREE.Vector3()
-  let targetRotationB = new THREE.Vector3(0, Math.PI, 0)
+  viewA.addToRotation([0, Math.PI, 0])
+  viewB.addToRotation([0, Math.PI, 0])
 
-  targetRotationA.set(
-    0,
-    targetRotationA.y + Math.PI,
-    0
-  )
-  targetRotationB.set(
-    0,
-    targetRotationB.y + Math.PI,
-    0
-  )
+  viewA.visible = false
+  viewA.interactable = false
+  viewB.visible = true
+  viewB.interactable = true
+  
+  let temp = viewB
+  viewB = viewA
+  viewA = temp
+
+  return
+  let hasSwitchedSides = false  
 
   animate({
+    // duration: 10000,
     onUpdate: v => {
-      viewA.rotation.set(...targetRotationA.toArray().map(a => a * v))
-      viewB.rotation.set(...targetRotationB.toArray().map(a => a * v))
+      if (v > 0.5 && !hasSwitchedSides) {
+        viewB.visible = true
+        viewA.visible = false
+        hasSwitchedSides = true
+      }
+      console.log(v)
+      viewA.addToRotation([0, Math.PI * v, 0])
+      viewB.addToRotation([0, Math.PI * v, 0])
     },
     onComplete: () => {
       viewA.interactable = false
