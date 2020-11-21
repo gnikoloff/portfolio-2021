@@ -44,10 +44,13 @@ export default class CubeView {
     // this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0, this._radius / 2))
 
     const letterOffsets = new Float32Array(this._numBoxes * 2)
+    const textureIndices = new Float32Array(this._numBoxes)
 
     this._geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
+    this._geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
 
     const letterTextureData = this._textureManager.getTexture('characters')
+    const imageTextureData = this._textureManager.getTexture('/assets/biest.png')
 
     const atlasTextureSize = new THREE.Vector2(letterTextureData.entriesPerRow, letterTextureData.entriesPerRow)
 
@@ -61,6 +64,7 @@ export default class CubeView {
         {
           letterTexture: { value: letterTextureData.texture },
           atlasTextureSize: { value: atlasTextureSize },
+          imageTexture: { value: imageTextureData.value }
         }
       ]),
       lights: true,
@@ -69,28 +73,36 @@ export default class CubeView {
       depthPacking: THREE.RGBADepthPacking,
     })
     this._frontMaterial.onBeforeCompile = shader => {
-      shader.vertexShader = shader.vertexShader.replace('void main() {', `
+      shader.vertexShader = shader.vertexShader.replace('varying vec3 vLightFront;', `
+        attribute vec2 letterOffset;
+        attribute float textureIdx;
         varying vec2 vUv;
-        void main() {
+        varying vec3 vLightFront;
+        varying vec2 vLetterOffset;
+        varying float vTextureIdx;
       `)
       shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `
         vUv = uv;
         vLetterOffset = letterOffset;
-      `)
-      shader.vertexShader = shader.vertexShader.replace('varying vec3 vLightFront;', `
-        attribute vec2 letterOffset;
-        varying vec3 vLightFront;
-        varying vec2 vLetterOffset;
+        vTextureIdx = textureIdx;
       `)
       shader.fragmentShader = shader.fragmentShader.replace('uniform vec3 diffuse;', `
         uniform vec3 diffuse;
         uniform sampler2D letterTexture;
+        uniform sampler2D imageTexture;
         uniform vec2 atlasTextureSize;
         varying vec2 vLetterOffset;
         varying vec2 vUv;
+        varying float vTextureIdx;
       `)
       shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
-        vec4 texelColor = texture2D(letterTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset);
+        vec4 texelColor = vec4(0.0);
+        if (vTextureIdx < 1.0) {
+          texelColor = texture2D(letterTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset); 
+        } else if (vTextureIdx < 2.0) {
+          texelColor = texture2D(imageTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset); 
+          // texelColor = vec4(1.0, 0.0, 0.0, 1.0);
+        }
         vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0); 
         diffuseColor = mix(baseColor, texelColor, texelColor.a);
       `)
@@ -161,13 +173,17 @@ export default class CubeView {
 
   set visible (visible) {
     if (!visible) {
-      const texCoords = this._textureManager.getEntryTexCoordinate(' ', 'characters')
+      const {
+        texCoordinates
+      } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
       for (let i = 0; i < this._numBoxes; i++) {
-        this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-        this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+        this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
+        this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
+        this._mesh.geometry.attributes.textureIdx.array[i] = 0
       }
     } else {
       this._frontMaterial.uniforms.letterTexture.value = this._textureManager.getTexture('characters').texture
+      this._frontMaterial.uniforms.imageTexture.value = this._textureManager.getTexture('/assets/biest.png').texture
     }
     this._mesh.visible = visible
   }
@@ -209,11 +225,31 @@ export default class CubeView {
         const entry = {
           value: keyValue[1].value, type
         }
+        const { width, height } = keyValue[1]
         // console.log('allocating ENTRY_TYPE_IMAGE texture for ' + key)
-        const texCoords = this._textureManager.getEntryTexCoordinate(entry, entry.value)
-        for (let i = 0; i < texCoords.length; i++) {
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[i][0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[i][1]
+        const {
+          texCoordinates,
+          textureUniformIdx
+        } = this._textureManager.getEntryTexCoordinate(entry, entry.value)
+        for (let i = 0; i < this._numBoxes; i++) {
+          const xIdx = i % this._radius
+          const yIdx = (i - xIdx) / this._radius
+          const startX = x
+          const startY = y
+          const endX = startX + width
+          const endY = startY + height
+
+          if (xIdx >= startX && xIdx <= endX && yIdx > startY && yIdx < endY) {
+            this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
+            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[i][0]
+            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[i][1]  
+          }
+
+          // if (xIdx > x && xIdx < x + width && yIdx > y && yIdx < y + height) {
+          //   this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
+          //   this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[i][0]
+          //   this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[i][1]
+          // }
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
@@ -221,41 +257,50 @@ export default class CubeView {
             value: key[n], type
           }
           // console.log('allocating ENTRY_TYPE_INDIVIDUAL_CHAR texture for ' + key)
-          const texCoords = this._textureManager.getEntryTexCoordinate(entry, 'characters')
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+          const {
+            texCoordinates
+          } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
           n++
         }
       } else if (type === ENTRY_TYPE_WORD_LINE) {
         const entry = {
           value: key, x, y, type
         }
-        // console.log('allocating ENTRY_TYPE_WORD_LINE texture for ' + key)
-        const texCoords = this._textureManager.getEntryTexCoordinate(entry, 'characters')
-        for (let i = startIdx, n = 0; i < startIdx + texCoords.length; i++) {
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[n][0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[n][1]
+        console.log('allocating ENTRY_TYPE_WORD_LINE texture for ' + key)
+        const {
+          texCoordinates
+        } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+        console.log(texCoordinates)
+        for (let i = startIdx, n = 0; i < startIdx + texCoordinates.length; i++) {
+          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[n][0]
+          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[n][1]
           n++
         }
       } else if (key === DECORATION_TYPE_BORDER) {
         const entry = { type }
-        const texCoords = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+        const {
+          texCoordinates
+        } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
         for (let i = 0; i < this._numBoxes; i++) {
           const xIdx = i % this._radius
           const yIdx = (i - xIdx) / this._radius
           if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
-            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
+            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
           } else if (i > 20 && i < 120) {
-            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
+            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
           }
         }
       } else {
-        const texCoords = this._textureManager.getEntryTexCoordinate(' ', 'characters')
+        const {
+          texCoordinates
+        } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
         for (let i = 0; i < this._numBoxes; i++) {
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
+          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
         }
       }
     })
@@ -322,9 +367,11 @@ export default class CubeView {
               value: key, x, y, type
             }
             const startIdx = x + this._radius * (this._radius - y)
-            const texCoords = this._textureManager.getEntryTexCoordinate(entry)
-            if (instanceXIdx >= x && instanceXIdx < x + texCoords.length && instanceYIdx === y) {
-              for (let i = startIdx; i < startIdx + texCoords.length; i++) {
+            const {
+              texCoordinates
+            } = this._textureManager.getEntryTexCoordinate(entry)
+            if (instanceXIdx >= x && instanceXIdx < x + texCoordinates.length && instanceYIdx === y) {
+              for (let i = startIdx; i < startIdx + texCoordinates.length; i++) {
                 const xIdx = i % this._radius
                 const yIdx = (i - xIdx) / this._radius
                 const x = xIdx - this._radius / 2
@@ -380,6 +427,7 @@ export default class CubeView {
       }
     }
 
+    this._mesh.geometry.attributes.textureIdx.needsUpdate = true
     this._mesh.geometry.attributes.letterOffset.needsUpdate = true
   }
 }

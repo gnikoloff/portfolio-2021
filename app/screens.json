@@ -38,12 +38,46 @@
       "linksTo": "mailto:nikoloffgeorgi@gmail.com"
     }
   },
+  "PROJECTS": {
+    "BACK": {
+      "x": 1,
+      "y": 2,
+      "type": "INDIVIDUAL_CHAR",
+      "linksTo": "HOME"
+    },
+    "Focus.de": {
+      "x": 3,
+      "y": 4,
+      "type": "WORD_LINE",
+      "linksTo": "Focus.de"
+    },
+    "MetaView": {
+      "x": 3,
+      "y": 6,
+      "type": "WORD_LINE",
+      "linksTo": "s"
+    },
+    "WebGL Shop": {
+      "x": 3,
+      "y": 8,
+      "type": "WORD_LINE",
+      "linksTo": "s"
+    }
+  },
   "INFO": {
     "A frontend developer from Berlin": {
       "x": 2,
-      "y": 8,
+      "y": 14,
       "type": "WORD_LINE",
       "linksTo": "HOME"
+    },
+    "IMAGE": {
+      "x": 1,
+      "y": 9,
+      "width": 17,
+      "height": 10,
+      "value": "/assets/biest.png",
+      "type": "IMAGE"
     }
   },
   "SOCIAL": {
@@ -52,6 +86,14 @@
       "y": 2,
       "type": "INDIVIDUAL_CHAR",
       "linksTo": "HOME"
+    }
+  },
+  "Focus.de": {
+    "BACK": {
+      "x": 1,
+      "y": 2,
+      "type": "INDIVIDUAL_CHAR",
+      "linksTo": "PROJECTS"
     }
   }
 }

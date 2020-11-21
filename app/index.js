@@ -34,10 +34,10 @@ const raycaster = new THREE.Raycaster()
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 const texManager = TextureManager.init({ size: maxTextureSize })
 
-// const entry = {
-//   value: '/assets/biest.jpg', type: "IMAGE"
-// }
-// texManager.getEntryTexCoordinate(entry, entry.value)
+const entry = {
+  value: '/assets/biest.png', type: "IMAGE"
+}
+texManager.getEntryTexCoordinate(entry, entry.value)
 // const entry1 = {
 //   value: '/assets/displacementmap2.jpg', type: "IMAGE"
 // }

@@ -38,8 +38,8 @@ export default class TextureManager {
       ctx.strokeStyle = 'red'
       ctx.lineWidth = 20
       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-      ctx.font = '60px Arial'
-      ctx.fillText(i, drawX + 5, drawY + cellWidth / 2)
+      // ctx.font = '60px Arial'
+      // ctx.fillText(i, drawX + 5, drawY + cellWidth / 2)
       ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
     }
 
@@ -53,7 +53,7 @@ export default class TextureManager {
       canvas,
       ctx,
       atlas: new Map(),
-      textureIdx: this._textureSet.size
+      textureUniformIdx: this._textureSet.size
     })
 
   }
@@ -61,7 +61,7 @@ export default class TextureManager {
     return entriesPerRow
   }
   _drawImage (entry, textureId) {
-    const { canvas, ctx, entriesPerRow, size, atlas } = this._textureSet.get(textureId)
+    const { canvas, ctx, entriesPerRow, size, atlas, texture } = this._textureSet.get(textureId)
     const imageSource = entry.value
     const texCoords = []
 
@@ -75,24 +75,21 @@ export default class TextureManager {
       texCoords.push([texAtlasX, texAtlasY])
     }
 
+    const {
+      x, y
+    } = entry
+
     const image = new Image()
     image.onload = () => {
       ctx.save()
-      ctx.drawImage(image, 0, 0, size, size, 0, 0, canvas.width, canvas.height * 0.8)
+      // ctx.drawImage(image, 0, 0, size, size, 0, 0, canvas.width, canvas.height * 0.8)
+      ctx.drawImage(image, 0, 0)
 
-      // for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
-      //   const xIdx = i % entriesPerRow
-      //   const yIdx = (i - xIdx) / entriesPerRow
-      //   const drawX = xIdx * cellWidth
-      //   const drawY = yIdx * cellWidth
-      //   ctx.strokeStyle = 'red'
-      //   ctx.lineWidth = 3
-      //   ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
-      // }
       atlas.set(entry.value, texCoords)
       // debugger
 
       ctx.restore()
+      texture.needsUpdate = true
     }
     image.src = imageSource
 
@@ -243,8 +240,8 @@ export default class TextureManager {
 
     const texAtlasesForLine = []
     
-    for (let i = atlasIdxX; i < cellsOccupied; i++) {
-      const texAtlasX = atlasIdxX / entriesPerRow + i / entriesPerRow
+    for (let i = atlasIdxX; i < atlasIdxX +cellsOccupied; i++) {
+      const texAtlasX = i / entriesPerRow
       const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
       texAtlasesForLine.push([texAtlasX, texAtlasY])
       // ctx.strokeRect(x, drawY, cellWidth, cellWidth)
@@ -301,6 +298,12 @@ export default class TextureManager {
   }
   getEntryTexCoordinate (entry, textureId = 'characters') {
     const textureData = this._textureSet.get(textureId)
+
+    let textureUniformIdx
+
+    if (textureData) {
+      textureUniformIdx = textureData.textureUniformIdx
+    }
     
     let atlas
     // debugger
@@ -310,7 +313,7 @@ export default class TextureManager {
       let size = this._size
       let lineWidth = 20
       if (entry.type === ENTRY_TYPE_IMAGE) {
-        size = 1024
+        size = 256
         lineWidth = 5
       }
       
@@ -329,10 +332,14 @@ export default class TextureManager {
         ctx.strokeStyle = 'red'
         ctx.lineWidth = lineWidth
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-        ctx.font = '60px Arial'
-        ctx.fillText(i, drawX + cellWidth / 2, drawY + cellWidth / 2)
+        // ctx.font = '60px Arial'
+        // ctx.fillText(i, drawX + cellWidth / 2, drawY + cellWidth / 2)
         ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
       }
+
+      textureUniformIdx = this._textureSet.size
+
+      console.log('allocated new tex', textureUniformIdx)
       
       this._textureSet.set(textureId, {
         size,
@@ -344,7 +351,7 @@ export default class TextureManager {
         canvas,
         ctx,
         atlas: new Map(),
-        textureIdx: this._textureSet.size
+        textureUniformIdx
       })
     }
     let texCoordinates
@@ -360,6 +367,9 @@ export default class TextureManager {
       // debugger
       // throw new Error('cant find texture coordinate for this entry')
     }
-    return texCoordinates
+    return {
+      texCoordinates,
+      textureUniformIdx
+    }
   }
 }
