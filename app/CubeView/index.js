@@ -22,6 +22,7 @@ import fragmentShaderFront from './fragment-shader-front.glsl'
 
 import vertexShaderSide from './vertex-shader-side.glsl'
 import fragmentShaderSide from './fragment-shader-side.glsl'
+import { Object3D } from 'three'
 
 const HOVERED_SCALE = 1.1
 
@@ -36,46 +37,86 @@ export default class CubeView {
     this._numBoxes = radius * radius
     this._interactable = false
 
+    this._matrix = new THREE.Matrix4()
+    this._boxPosition = new THREE.Vector3()
+    this._boxRotation = new THREE.Quaternion()
+    this._boxScale = new THREE.Vector3()
+    this._dummy = new Object3D()
+
     this._screenData = null
 
     this._geometry = new THREE.BoxBufferGeometry(1, 1, this._radius)
     // this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0, this._radius / 2))
 
-    const scales = new Float32Array(this._numBoxes)
     const letterOffsets = new Float32Array(this._numBoxes * 2)
-    for (let i = 0; i < this._numBoxes; i++) {
-      scales[i] = 1
-      // scales[i] = Math.random()
-    }
 
-    this._geometry.setAttribute('scale', new THREE.InstancedBufferAttribute(scales, 1))
     this._geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
 
     const letterTextureData = this._textureManager.getTexture('characters')
 
     const atlasTextureSize = new THREE.Vector2(letterTextureData.entriesPerRow, letterTextureData.entriesPerRow)
-    
+
+    var wVertex = THREE.ShaderLib["lambert"].vertexShader
+    var wFragment = THREE.ShaderLib["lambert"].fragmentShader
+    var wUniforms = THREE.ShaderLib["lambert"].uniforms
+
     this._frontMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        lightPosition: { value: lightPosition },
-        letterTexture: { value: letterTextureData.texture },
-        atlasTextureSize: { value: atlasTextureSize },
-      },
-      vertexShader: vertexShaderFront,
-      fragmentShader: fragmentShaderFront,
+      uniforms: THREE.UniformsUtils.merge([
+        wUniforms,
+        {
+          letterTexture: { value: letterTextureData.texture },
+          atlasTextureSize: { value: atlasTextureSize },
+        }
+      ]),
+      lights: true,
+      vertexShader: wVertex,
+      fragmentShader: wFragment,
+      depthPacking: THREE.RGBADepthPacking,
     })
+    this._frontMaterial.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader.replace('void main() {', `
+        varying vec2 vUv;
+        void main() {
+      `)
+      shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `
+        vUv = uv;
+        vLetterOffset = letterOffset;
+      `)
+      shader.vertexShader = shader.vertexShader.replace('varying vec3 vLightFront;', `
+        attribute vec2 letterOffset;
+        varying vec3 vLightFront;
+        varying vec2 vLetterOffset;
+      `)
+      shader.fragmentShader = shader.fragmentShader.replace('uniform vec3 diffuse;', `
+        uniform vec3 diffuse;
+        uniform sampler2D letterTexture;
+        uniform vec2 atlasTextureSize;
+        varying vec2 vLetterOffset;
+        varying vec2 vUv;
+      `)
+      shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
+        vec4 texelColor = texture2D(letterTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset);
+        vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0); 
+        diffuseColor = mix(baseColor, texelColor, texelColor.a);
+      `)
+    }
 
     this._sideMaterial = new THREE.ShaderMaterial({
-      uniforms: THREE.UniformsUtils.merge([{
-        lightPosition: {
-          value: lightPosition
-        },
-        lightPosition: { value: lightPosition },
-        atlasTextureSize: { value: atlasTextureSize },
-      }]),
-      vertexShader: vertexShaderSide,
-      fragmentShader: fragmentShaderSide,
+      uniforms: THREE.UniformsUtils.merge([
+        wUniforms,
+        {
+          lightPosition: { value: lightPosition },
+          atlasTextureSize: { value: atlasTextureSize },
+        }
+      ]),
+      lights: true,
+      vertexShader: wVertex,
+      fragmentShader: wFragment,
+      depthPacking: THREE.RGBADepthPacking,
     })
+
+
+    console.log(THREE.ShaderChunk)
 
     const materials = [
       this._sideMaterial,
@@ -93,25 +134,31 @@ export default class CubeView {
     this._mesh.visible = false
     // this._mesh.position.set(0, 0, -this._radius / 2)
 
-    const matrix = new THREE.Matrix4()
     for (let i = 0; i < this._numBoxes; i++) {
       const xIdx = i % this._radius
       const yIdx = (i - xIdx) / this._radius
       const x = xIdx - this._radius / 2
       const y = yIdx - this._radius / 2
-      matrix.setPosition(x, y, 0)
-      this._mesh.setMatrixAt(i, matrix)
+      this._boxPosition.set(x, y, 0)
+      this._boxScale.set(1, 1, 1)
+      this._matrix.compose(
+        this._boxPosition,
+        this._boxRotation,
+        this._boxScale
+      )
+      this._mesh.setMatrixAt(i, this._matrix)
     }
-    this._mesh.customDepthMaterial = new THREE.ShaderMaterial({
-      vertexShader: `
-        attribute float scale;
-        void main () {
-            vec4 worldPosition = modelMatrix * instanceMatrix * vec4(vec3(1.0, 1.0, scale) * position, 1.0);
-            gl_Position = projectionMatrix * viewMatrix * worldPosition;
-        }
-      `,
-      fragmentShader: THREE.ShaderLib.shadow.fragmentShader,
-    })
+    this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial( {
+      depthPacking: THREE.RGBADepthPacking,
+      // alphaTest: 0.8
+    } );
+    this._mesh.customDepthMaterial.onBeforeCompile = shader => {
+        // app specific instancing shader code
+        // shader.vertexShader = '#define DEPTH_PACKING 3201'+"\n"+THREE.ShaderChunk.instance_pars_vertex + "\n" + shader.vertexShader;
+        // shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>'+THREE.ShaderChunk.instance_vertex);
+      
+        // shader.fragmentShader = '#define DEPTH_PACKING 3201'+"\n" + shader.fragmentShader;
+    } 
   }
   get mesh () {
     return this._mesh
@@ -131,7 +178,7 @@ export default class CubeView {
   set interactable (interactable) {
     if (!interactable) {
       for (let i = 0; i < this._numBoxes; i++) {
-        this._mesh.geometry.attributes.scale.array[i] = 1
+        // this._mesh.geometry.attributes.scale.array[i] = 1
       }
     }
     this._interactable = interactable
@@ -252,12 +299,25 @@ export default class CubeView {
             return
           }
 
+          // this._matrix.identity()
+
+                this._dummy.matrix.identity()
+
           if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
             if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
               const startIdx = x + this._radius * (this._radius - y)
               for (let n = startIdx; n < startIdx + key.length; n++) {
-                this._mesh.geometry.attributes.scale.array[n] = HOVERED_SCALE
+                const xIdx = n % this._radius
+                const yIdx = (n - xIdx) / this._radius
+                const x = xIdx - this._radius / 2
+                const y = yIdx - this._radius / 2
+                this._dummy.position.set(x, y, 0)
+                this._dummy.scale.set(1, 1, HOVERED_SCALE)
+                this._dummy.updateMatrix()
+                this._mesh.setMatrixAt(n, this._dummy.matrix)
               }
+
+              this._mesh.instanceMatrix.needsUpdate = true
               hoveredItem = { key, linksTo }
             }
           } else if (type === ENTRY_TYPE_WORD_LINE) {
@@ -268,28 +328,44 @@ export default class CubeView {
             const texCoords = this._textureManager.getEntryTexCoordinate(entry)
             if (instanceXIdx >= x && instanceXIdx < x + texCoords.length && instanceYIdx === y) {
               for (let i = startIdx; i < startIdx + texCoords.length; i++) {
-                this._mesh.geometry.attributes.scale.array[i] = HOVERED_SCALE
+                const xIdx = i % this._radius
+                const yIdx = (i - xIdx) / this._radius
+                const x = xIdx - this._radius / 2
+                const y = yIdx - this._radius / 2
+                this._dummy.position.set(x, y, 0)
+                this._dummy.scale.set(1, 1, HOVERED_SCALE)
+                this._dummy.updateMatrix()
+                this._mesh.setMatrixAt(i, this._dummy.matrix)
               }
+              this._mesh.instanceMatrix.needsUpdate = true
               hoveredItem = { key, linksTo }
             }
           }        
         })
 
-        // if (hoveredItem) {
-        //   if (!document.body.classList.contains('hovering')) {
-        //     document.body.classList.add('hovering')
-        //   }
-        // } else {
-        //   if (document.body.classList.contains('hovering')) {
-        //     document.body.classList.remove('hovering')
-        //   }
-        //   store.dispatch(setEntryHover(null))
-        //   for (let i = 0; i < this._numBoxes; i++) {
-        //     // this._mesh.geometry.attributes.scale.array[i] = 1
-        //   }
-        // }
+        if (hoveredItem) {
+            if (!document.body.classList.contains('hovering')) {
+              document.body.classList.add('hovering')
+            }
+        } else {
+          if (document.body.classList.contains('hovering')) {
+            document.body.classList.remove('hovering')
+          }
+          for (let i = 0; i < this._numBoxes; i++) {
+            const xIdx = i % this._radius
+            const yIdx = (i - xIdx) / this._radius
+            const x = xIdx - this._radius / 2
+            const y = yIdx - this._radius / 2
+            this._dummy.position.set(x, y, 0)
+            this._dummy.scale.set(1, 1, 1)
+            this._dummy.updateMatrix()
+            this._mesh.setMatrixAt(i, this._dummy.matrix)
+          }
+          this._mesh.instanceMatrix.needsUpdate = true
+        }
       }
       // console.log(hoveredItem, oldHoveredItem)
+
 
       // console.log(hoveredItem)
       
@@ -297,18 +373,7 @@ export default class CubeView {
         store.dispatch(setEntryHover(hoveredItem))
       }
 
-      if (hoveredItem) {
-          if (!document.body.classList.contains('hovering')) {
-            document.body.classList.add('hovering')
-          }
-      } else {
-        if (document.body.classList.contains('hovering')) {
-          document.body.classList.remove('hovering')
-        }
-        for (let i = 0; i < this._numBoxes; i++) {
-          this._mesh.geometry.attributes.scale.array[i] = 1
-        }
-      }
+      
 
       
       
@@ -318,7 +383,6 @@ export default class CubeView {
       }
     }
 
-    this._mesh.geometry.attributes.scale.needsUpdate = true
     this._mesh.geometry.attributes.letterOffset.needsUpdate = true
   }
 }

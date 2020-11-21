@@ -17,5 +17,5 @@ void main () {
   vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
   vec4 texColor = texture2D(letterTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset);
 
-  gl_FragColor = mix(baseColor, texColor, texColor.a) * lightColor;
+  gl_FragColor = mix(baseColor, texColor, texColor.a);
 }

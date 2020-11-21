@@ -31,7 +31,8 @@ const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0
 const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: true })
 const raycaster = new THREE.Raycaster()
 
-const texManager = TextureManager.init({ size: Math.min(4096, renderer.capabilities.maxTextureSize) })
+const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
+const texManager = TextureManager.init({ size: maxTextureSize })
 
 const entry = {
   value: '/assets/biest.jpg', type: "IMAGE"
@@ -41,25 +42,23 @@ texManager.getEntryTexCoordinate(entry, entry.value)
 //   value: '/assets/displacementmap2.jpg', type: "IMAGE"
 // }
 // texManager.getEntryTexCoordinate(entry1, entry1.value)
-
-var light = new THREE.DirectionalLight(0x000000, 1);
-light.position.set(30, 700, -500);
+const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
+scene.add( light2 );
+var light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(8, 30, 40);
 light.castShadow = true; // default false
-light.shadow.mapSize.width = 128;
-light.shadow.mapSize.height = 128;
+light.shadow.mapSize.width = maxTextureSize;
+light.shadow.mapSize.height = maxTextureSize;
 light.shadow.camera.left = -20;
 light.shadow.camera.right = 20;
 light.shadow.camera.top = 20;
 light.shadow.camera.bottom = -20;
 light.shadow.camera.near = 0.5;
-light.shadow.camera.far = 2000;
-
-
+light.shadow.camera.far = 2000
 
 var helper = new THREE.DirectionalLightHelper(light)
 scene.add(helper);
-
-scene.add(light);
+scene.add(light)
 
 renderer.shadowMap.enabled = true
 renderer.shadowMap.needsUpdate = true
@@ -80,7 +79,7 @@ let viewA = new CubeView({
 viewA.interactable = true
 viewA.visible = true
 setTimeout(() => {
-  viewA.drawScreen(screens[VIEW_HOME])
+  viewA.drawScreen(screens['PROJECTS'])
 }, 1000)
 
 let viewB = new CubeView({
@@ -92,7 +91,7 @@ let viewB = new CubeView({
 scene.add(viewA.mesh)
 scene.add(viewB.mesh)
 
-scene.add(new THREE.CameraHelper(light.shadow.camera))
+// scene.add(new THREE.CameraHelper(light.shadow.camera))
 
 // load all images
 
@@ -165,8 +164,6 @@ function onMouseMove (e) {
 }
 
 function updateFrame (ts = 0) {
-  renderer.clearColor()
-
   const opts = {
     raycaster,
     mouse,
