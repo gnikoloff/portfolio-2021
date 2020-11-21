@@ -40,27 +40,13 @@
   },
   "INFO": {
     "A frontend developer from Berlin": {
-      "x": 6,
+      "x": 2,
       "y": 8,
       "type": "WORD_LINE",
       "linksTo": "HOME"
-    },
-  },
-  "SOCIAL": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "HOME"
     }
   },
-  "PROJECTS": {
-    "Image": {
-      "x": 2,
-      "y": 2,
-      "type": "IMAGE",
-      "value": "/assets/biest.jpg"
-    },
+  "SOCIAL": {
     "BACK": {
       "x": 1,
       "y": 2,

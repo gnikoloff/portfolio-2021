@@ -17,11 +17,6 @@ import {
   EVT_HOVER_MENU_ITEM,
 } from '../constants'
 
-import vertexShaderFront from './vertex-shader-front.glsl'
-import fragmentShaderFront from './fragment-shader-front.glsl'
-
-import vertexShaderSide from './vertex-shader-side.glsl'
-import fragmentShaderSide from './fragment-shader-side.glsl'
 import { Object3D } from 'three'
 
 const HOVERED_SCALE = 1.1
@@ -116,16 +111,16 @@ export default class CubeView {
     })
 
 
-    console.log(THREE.ShaderChunk)
+    // const materials = [
+    //   this._sideMaterial,
+    //   this._sideMaterial,
+    //   this._sideMaterial,
+    //   this._sideMaterial,
+    //   this._frontMaterial,
+    //   this._sideMaterial,
+    // ]
 
-    const materials = [
-      this._sideMaterial,
-      this._sideMaterial,
-      this._sideMaterial,
-      this._sideMaterial,
-      this._frontMaterial,
-      this._sideMaterial,
-    ]
+    const materials = this._frontMaterial
 
     this._mesh = new THREE.InstancedMesh(this._geometry, materials, this._numBoxes)
     this._mesh.rotation.set(...rotation)
@@ -171,6 +166,8 @@ export default class CubeView {
         this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
         this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
       }
+    } else {
+      this._frontMaterial.uniforms.letterTexture.value = this._textureManager.getTexture('characters').texture
     }
     this._mesh.visible = visible
   }
@@ -212,12 +209,10 @@ export default class CubeView {
         const entry = {
           value: keyValue[1].value, type
         }
+        // console.log('allocating ENTRY_TYPE_IMAGE texture for ' + key)
         const texCoords = this._textureManager.getEntryTexCoordinate(entry, entry.value)
-        this._mesh.material[4].uniforms.letterTexture.value = this._textureManager.getTexture(entry.value).texture
-        this._mesh.material[4].uniforms.letterTexture.needsUpdate = true
         for (let i = 0; i < texCoords.length; i++) {
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[i
-          ][0]
+          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[i][0]
           this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[i][1]
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
@@ -225,6 +220,7 @@ export default class CubeView {
           const entry = {
             value: key[n], type
           }
+          // console.log('allocating ENTRY_TYPE_INDIVIDUAL_CHAR texture for ' + key)
           const texCoords = this._textureManager.getEntryTexCoordinate(entry, 'characters')
           this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[0]
           this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoords[1]
@@ -234,6 +230,7 @@ export default class CubeView {
         const entry = {
           value: key, x, y, type
         }
+        // console.log('allocating ENTRY_TYPE_WORD_LINE texture for ' + key)
         const texCoords = this._textureManager.getEntryTexCoordinate(entry, 'characters')
         for (let i = startIdx, n = 0; i < startIdx + texCoords.length; i++) {
           this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoords[n][0]
@@ -301,7 +298,7 @@ export default class CubeView {
 
           // this._matrix.identity()
 
-                this._dummy.matrix.identity()
+            this._dummy.matrix.identity()
 
           if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
             if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {

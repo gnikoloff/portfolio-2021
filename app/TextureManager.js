@@ -37,6 +37,9 @@ export default class TextureManager {
       const drawY = yIdx * cellWidth
       ctx.strokeStyle = 'red'
       ctx.lineWidth = 20
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+      ctx.font = '60px Arial'
+      ctx.fillText(i, drawX + 5, drawY + cellWidth / 2)
       ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
     }
 
@@ -50,6 +53,7 @@ export default class TextureManager {
       canvas,
       ctx,
       atlas: new Map(),
+      textureIdx: this._textureSet.size
     })
 
   }
@@ -239,8 +243,7 @@ export default class TextureManager {
 
     const texAtlasesForLine = []
     
-    for (let i = 0; i < cellsOccupied; i++) {
-      const x = drawX + i * cellWidth
+    for (let i = atlasIdxX; i < cellsOccupied; i++) {
       const texAtlasX = atlasIdxX / entriesPerRow + i / entriesPerRow
       const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
       texAtlasesForLine.push([texAtlasX, texAtlasY])
@@ -277,6 +280,7 @@ export default class TextureManager {
     } else {
       texAtlasCoords = this._drawDecoration(entry, textureId)
     }
+    console.log('%c mark texture as needs update', 'background: yellow;color:black;')
     texture.needsUpdate = true
     return texAtlasCoords
   }
@@ -297,6 +301,7 @@ export default class TextureManager {
   }
   getEntryTexCoordinate (entry, textureId = 'characters') {
     const textureData = this._textureSet.get(textureId)
+    
     let atlas
     // debugger
     if (textureData) {
@@ -316,8 +321,6 @@ export default class TextureManager {
       const entriesPerRow = 20
       const cellWidth = size / entriesPerRow
 
-      console.log(size)
-
       for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
         const xIdx = i % entriesPerRow
         const yIdx = (i - xIdx) / entriesPerRow
@@ -325,6 +328,9 @@ export default class TextureManager {
         const drawY = yIdx * cellWidth
         ctx.strokeStyle = 'red'
         ctx.lineWidth = lineWidth
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+        ctx.font = '60px Arial'
+        ctx.fillText(i, drawX + cellWidth / 2, drawY + cellWidth / 2)
         ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
       }
       
@@ -338,20 +344,20 @@ export default class TextureManager {
         canvas,
         ctx,
         atlas: new Map(),
+        textureIdx: this._textureSet.size
       })
     }
     let texCoordinates
     // TODO fix decoration logic
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT || entry.type === "CROSS") {
       // texCoordinates = atlas.get(entry.type)
+      texCoordinates = atlas.get(entry.value)
     } else {
-      texCoordinates = atlas.get(entry.value, textureId)
-      if (entry.type === ENTRY_TYPE_IMAGE) {
-        // debugger
-      }
+      texCoordinates = atlas.get(entry.value)
     }
     if (!texCoordinates) {
       texCoordinates = this._addAtlasEntry(entry, textureId)
+      // debugger
       // throw new Error('cant find texture coordinate for this entry')
     }
     return texCoordinates

@@ -34,10 +34,10 @@ const raycaster = new THREE.Raycaster()
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 const texManager = TextureManager.init({ size: maxTextureSize })
 
-const entry = {
-  value: '/assets/biest.jpg', type: "IMAGE"
-}
-texManager.getEntryTexCoordinate(entry, entry.value)
+// const entry = {
+//   value: '/assets/biest.jpg', type: "IMAGE"
+// }
+// texManager.getEntryTexCoordinate(entry, entry.value)
 // const entry1 = {
 //   value: '/assets/displacementmap2.jpg', type: "IMAGE"
 // }
@@ -78,15 +78,15 @@ let viewA = new CubeView({
 })
 viewA.interactable = true
 viewA.visible = true
-setTimeout(() => {
-  viewA.drawScreen(screens['PROJECTS'])
-}, 1000)
+viewA.drawScreen(screens['HOME'])
+viewA.name = 'view a'
 
 let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position,
   rotation: [0, Math.PI, 0]
 })
+viewB.name = 'view b'
 
 scene.add(viewA.mesh)
 scene.add(viewB.mesh)
@@ -105,6 +105,8 @@ function onMouseClick (e) {
   if (!hoverEntryName) {
     return
   }
+
+  console.log(hoverEntryName.linksTo)
 
   e.preventDefault()
 
