@@ -34,7 +34,8 @@
     "GET IN TOUCH": {
       "x": 4,
       "y": 17,
-      "type": "INDIVIDUAL_CHAR"
+      "type": "INDIVIDUAL_CHAR",
+      "linksTo": "mailto:nikoloffgeorgi@gmail.com"
     }
   },
   "INFO": {

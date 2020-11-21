@@ -109,6 +109,11 @@ function onMouseClick (e) {
 
   e.preventDefault()
 
+  if (hoverEntryName.linksTo.includes('mailto')) {
+    window.open(hoverEntryName.linksTo)
+    return
+  }
+
   document.title = `${hoverEntryName.linksTo.substring(0, 1)}${hoverEntryName.linksTo.substring(1).toLowerCase()} - Georgi Nikolov`
   
   viewB.drawScreen(screens[hoverEntryName.linksTo])
