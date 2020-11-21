@@ -61,7 +61,7 @@ export default class TextureManager {
     return entriesPerRow
   }
   _drawImage (entry, textureId) {
-    const { canvas, ctx, entriesPerRow, size, atlas, texture } = this._textureSet.get(textureId)
+    const { canvas, ctx, entriesPerRow, size, atlas, texture, cellWidth } = this._textureSet.get(textureId)
     const imageSource = entry.value
     const texCoords = []
 
@@ -83,7 +83,7 @@ export default class TextureManager {
     image.onload = () => {
       ctx.save()
       // ctx.drawImage(image, 0, 0, size, size, 0, 0, canvas.width, canvas.height * 0.8)
-      ctx.drawImage(image, 0, 0)
+      ctx.drawImage(image, 0, cellWidth * 2)
 
       atlas.set(entry.value, texCoords)
       // debugger

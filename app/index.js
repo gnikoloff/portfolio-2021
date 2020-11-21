@@ -38,6 +38,10 @@ const entry = {
   value: '/assets/biest.png', type: "IMAGE"
 }
 texManager.getEntryTexCoordinate(entry, entry.value)
+const entry2 = {
+  value: '/assets/displacementmap.jpg', type: "IMAGE"
+}
+texManager.getEntryTexCoordinate(entry2, entry2.value)
 // const entry1 = {
 //   value: '/assets/displacementmap2.jpg', type: "IMAGE"
 // }

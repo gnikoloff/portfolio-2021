@@ -51,20 +51,27 @@ export default class CubeView {
 
     const letterTextureData = this._textureManager.getTexture('characters')
     const imageTextureData = this._textureManager.getTexture('/assets/biest.png')
+    const imageTextureData2 = this._textureManager.getTexture('/assets/displacementmap.jpg')
 
-    const atlasTextureSize = new THREE.Vector2(letterTextureData.entriesPerRow, letterTextureData.entriesPerRow)
+    const textureSize = new THREE.Vector2(letterTextureData.entriesPerRow, letterTextureData.entriesPerRow)
 
-    var wVertex = THREE.ShaderLib["lambert"].vertexShader
-    var wFragment = THREE.ShaderLib["lambert"].fragmentShader
-    var wUniforms = THREE.ShaderLib["lambert"].uniforms
+    const wVertex = THREE.ShaderLib.lambert.vertexShader
+    const wFragment = THREE.ShaderLib.lambert.fragmentShader
+    const wUniforms = THREE.ShaderLib.lambert.uniforms
 
     this._frontMaterial = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([
         wUniforms,
         {
-          letterTexture: { value: letterTextureData.texture },
-          atlasTextureSize: { value: atlasTextureSize },
-          imageTexture: { value: imageTextureData.value }
+          textureSize: { value: textureSize },
+          textures: {
+            type: 'tv',
+            value: [
+              letterTextureData.texture,
+              imageTextureData.texture,
+              imageTextureData2.texture
+            ]
+          }
         }
       ]),
       lights: true,
@@ -88,9 +95,8 @@ export default class CubeView {
       `)
       shader.fragmentShader = shader.fragmentShader.replace('uniform vec3 diffuse;', `
         uniform vec3 diffuse;
-        uniform sampler2D letterTexture;
-        uniform sampler2D imageTexture;
-        uniform vec2 atlasTextureSize;
+        uniform sampler2D textures[3];
+        uniform vec2 textureSize;
         varying vec2 vLetterOffset;
         varying vec2 vUv;
         varying float vTextureIdx;
@@ -98,10 +104,11 @@ export default class CubeView {
       shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
         vec4 texelColor = vec4(0.0);
         if (vTextureIdx < 1.0) {
-          texelColor = texture2D(letterTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset); 
+          texelColor = texture2D(textures[0], vUv * vec2(1.0 / textureSize) + vLetterOffset); 
         } else if (vTextureIdx < 2.0) {
-          texelColor = texture2D(imageTexture, vUv * vec2(1.0 / atlasTextureSize) + vLetterOffset); 
-          // texelColor = vec4(1.0, 0.0, 0.0, 1.0);
+          texelColor = texture2D(textures[1], vUv * vec2(1.0 / textureSize) + vLetterOffset); 
+        } else if (vTextureIdx < 3.0) {
+          texelColor = texture2D(textures[2], vUv * vec2(1.0 / textureSize) + vLetterOffset); 
         }
         vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0); 
         diffuseColor = mix(baseColor, texelColor, texelColor.a);
@@ -113,13 +120,20 @@ export default class CubeView {
         wUniforms,
         {
           lightPosition: { value: lightPosition },
-          atlasTextureSize: { value: atlasTextureSize },
+          textureSize: { value: textureSize },
+          textures: {
+            type: 'tv',
+            value: [
+              letterTextureData.texture,
+              imageTextureData.texture,
+              imageTextureData2.texture
+            ]
+          }
         }
       ]),
       lights: true,
       vertexShader: wVertex,
-      fragmentShader: wFragment,
-      depthPacking: THREE.RGBADepthPacking,
+      fragmentShader: wFragment
     })
 
 
@@ -182,8 +196,11 @@ export default class CubeView {
         this._mesh.geometry.attributes.textureIdx.array[i] = 0
       }
     } else {
-      this._frontMaterial.uniforms.letterTexture.value = this._textureManager.getTexture('characters').texture
-      this._frontMaterial.uniforms.imageTexture.value = this._textureManager.getTexture('/assets/biest.png').texture
+      this._frontMaterial.uniforms.textures.value = [
+        this._textureManager.getTexture('characters').texture,
+        this._textureManager.getTexture('/assets/biest.png').texture,
+        this._textureManager.getTexture('/assets/displacementmap.jpg').texture
+      ]
     }
     this._mesh.visible = visible
   }
