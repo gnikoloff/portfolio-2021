@@ -15,6 +15,7 @@ import CubeView from './CubeView'
 import {
   VIEW_HOME,
   EVT_HOVER_MENU_ITEM,
+  ENTRY_TYPE_IMAGE
 } from './constants'
 import eventEmitter from './event-emitter.js'
 
@@ -34,18 +35,18 @@ const raycaster = new THREE.Raycaster()
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 const texManager = TextureManager.init({ size: maxTextureSize })
 
-const entry = {
-  value: '/assets/biest.png', type: "IMAGE"
-}
-texManager.getEntryTexCoordinate(entry, entry.value)
-const entry2 = {
-  value: '/assets/displacementmap.jpg', type: "IMAGE"
-}
-texManager.getEntryTexCoordinate(entry2, entry2.value)
-// const entry1 = {
-//   value: '/assets/displacementmap2.jpg', type: "IMAGE"
-// }
-// texManager.getEntryTexCoordinate(entry1, entry1.value)
+const imageEntries = Object.entries(screens).reduce((acc, keyValue) => {
+  const value = keyValue[1]
+  Object.entries(value).forEach(keyValue => {
+    const value = keyValue[1]
+    if (value.type === ENTRY_TYPE_IMAGE) {
+      acc.push(value)
+    }
+  })
+  return acc
+}, [])
+imageEntries.forEach(entry => texManager.getEntryTexCoordinate(entry, entry.value))
+
 const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light2 );
 var light = new THREE.DirectionalLight(0xffffff, 1);
@@ -78,7 +79,8 @@ camera.lookAt(new THREE.Vector3())
 
 let viewA = new CubeView({
   radius: 20,
-  lightPosition: light.position
+  lightPosition: light.position,
+  imageEntries
 })
 viewA.interactable = true
 viewA.visible = true
@@ -88,7 +90,8 @@ viewA.name = 'view a'
 let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position,
-  rotation: [0, Math.PI, 0]
+  rotation: [0, Math.PI, 0],
+  imageEntries
 })
 viewB.name = 'view b'
 

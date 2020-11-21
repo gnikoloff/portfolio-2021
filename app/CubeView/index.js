@@ -21,13 +21,57 @@ import { Object3D } from 'three'
 
 const HOVERED_SCALE = 1.1
 
+const createShaderMaterial = ({
+  textures,
+  textureSize,
+  vertexShaderSnippets = {},
+  fragmentShaderSnippets = {}
+} = {}) => {
+  const wVertex = THREE.ShaderLib.lambert.vertexShader
+  const wFragment = THREE.ShaderLib.lambert.fragmentShader
+  const wUniforms = THREE.ShaderLib.lambert.uniforms
+  const material = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([
+      wUniforms,
+      textures
+        ? {
+          textureSize: { value: textureSize },
+          textures: {
+            type: 'tv',
+            value: textures
+          }
+        }
+        : {}
+    ]),
+    lights: true,
+    vertexShader: wVertex,
+    fragmentShader: wFragment,
+    depthPacking: THREE.RGBADepthPacking,
+  })
+  material.onBeforeCompile = shader => {
+    Object.entries(vertexShaderSnippets).forEach(keyValue => {
+      const key = keyValue[0]
+      const value = keyValue[1]
+      shader.vertexShader = shader.vertexShader.replace(key, value)
+    })
+    Object.entries(fragmentShaderSnippets).forEach(keyValue => {
+      const key = keyValue[0]
+      const value = keyValue[1]
+      shader.fragmentShader = shader.fragmentShader.replace(key, value)
+    })
+  }
+  return material
+}
+
 export default class CubeView {
   constructor ({
     radius,
     lightPosition,
+    imageEntries,
     rotation = [0, 0, 0]
   }) {
     this._textureManager = TextureManager.getInstance()
+    this._imageEntries = imageEntries
     this._radius = radius
     this._numBoxes = radius * radius
     this._interactable = false
@@ -50,103 +94,71 @@ export default class CubeView {
     this._geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
 
     const letterTextureData = this._textureManager.getTexture('characters')
-    const imageTextureData = this._textureManager.getTexture('/assets/biest.png')
-    const imageTextureData2 = this._textureManager.getTexture('/assets/displacementmap.jpg')
+    const textures = [
+      letterTextureData.texture,
+      ...imageEntries.map(entry => this._textureManager.getTexture(entry.value).texture)
+    ]
 
     const textureSize = new THREE.Vector2(letterTextureData.entriesPerRow, letterTextureData.entriesPerRow)
 
-    const wVertex = THREE.ShaderLib.lambert.vertexShader
-    const wFragment = THREE.ShaderLib.lambert.fragmentShader
-    const wUniforms = THREE.ShaderLib.lambert.uniforms
-
-    this._frontMaterial = new THREE.ShaderMaterial({
-      uniforms: THREE.UniformsUtils.merge([
-        wUniforms,
-        {
-          textureSize: { value: textureSize },
-          textures: {
-            type: 'tv',
-            value: [
-              letterTextureData.texture,
-              imageTextureData.texture,
-              imageTextureData2.texture
-            ]
+    const frontMaterial = createShaderMaterial({
+      textures,
+      textureSize,
+      vertexShaderSnippets: {
+        'varying vec3 vLightFront;': `
+          attribute vec2 letterOffset;
+          attribute float textureIdx;
+          varying vec2 vUv;
+          varying vec3 vLightFront;
+          varying vec2 vLetterOffset;
+          varying float vTextureIdx;
+        `,
+        '#include <uv_vertex>': `
+          vUv = uv;
+          vLetterOffset = letterOffset;
+          vTextureIdx = textureIdx;
+        `
+      },
+      fragmentShaderSnippets: {
+        'uniform vec3 diffuse;': `
+          uniform vec3 diffuse;
+          uniform sampler2D textures[${textures.length}];
+          uniform vec2 textureSize;
+          varying vec2 vLetterOffset;
+          varying vec2 vUv;
+          varying float vTextureIdx;
+        `,
+        '#include <map_fragment>': `
+          vec4 texelColor = vec4(0.0);
+          vec2 transformedUV = vUv * vec2(1.0 / textureSize) + vLetterOffset;
+          if (vTextureIdx < 1.0) {
+            texelColor = texture2D(textures[0], transformedUV);
+          } else if (vTextureIdx < 2.0) {
+            texelColor = texture2D(textures[1], transformedUV);
+          } else if (vTextureIdx < 3.0) {
+            texelColor = texture2D(textures[2], transformedUV);
+          } else if (vTextureIdx < 4.0) {
+            texelColor = texture2D(textures[3], transformedUV);
           }
-        }
-      ]),
-      lights: true,
-      vertexShader: wVertex,
-      fragmentShader: wFragment,
-      depthPacking: THREE.RGBADepthPacking,
-    })
-    this._frontMaterial.onBeforeCompile = shader => {
-      shader.vertexShader = shader.vertexShader.replace('varying vec3 vLightFront;', `
-        attribute vec2 letterOffset;
-        attribute float textureIdx;
-        varying vec2 vUv;
-        varying vec3 vLightFront;
-        varying vec2 vLetterOffset;
-        varying float vTextureIdx;
-      `)
-      shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `
-        vUv = uv;
-        vLetterOffset = letterOffset;
-        vTextureIdx = textureIdx;
-      `)
-      shader.fragmentShader = shader.fragmentShader.replace('uniform vec3 diffuse;', `
-        uniform vec3 diffuse;
-        uniform sampler2D textures[3];
-        uniform vec2 textureSize;
-        varying vec2 vLetterOffset;
-        varying vec2 vUv;
-        varying float vTextureIdx;
-      `)
-      shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
-        vec4 texelColor = vec4(0.0);
-        if (vTextureIdx < 1.0) {
-          texelColor = texture2D(textures[0], vUv * vec2(1.0 / textureSize) + vLetterOffset); 
-        } else if (vTextureIdx < 2.0) {
-          texelColor = texture2D(textures[1], vUv * vec2(1.0 / textureSize) + vLetterOffset); 
-        } else if (vTextureIdx < 3.0) {
-          texelColor = texture2D(textures[2], vUv * vec2(1.0 / textureSize) + vLetterOffset); 
-        }
-        vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0); 
-        diffuseColor = mix(baseColor, texelColor, texelColor.a);
-      `)
-    }
-
-    this._sideMaterial = new THREE.ShaderMaterial({
-      uniforms: THREE.UniformsUtils.merge([
-        wUniforms,
-        {
-          lightPosition: { value: lightPosition },
-          textureSize: { value: textureSize },
-          textures: {
-            type: 'tv',
-            value: [
-              letterTextureData.texture,
-              imageTextureData.texture,
-              imageTextureData2.texture
-            ]
-          }
-        }
-      ]),
-      lights: true,
-      vertexShader: wVertex,
-      fragmentShader: wFragment
+          vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0); 
+          diffuseColor = mix(baseColor, texelColor, texelColor.a);
+        `
+      }
     })
 
+    const sideMaterial = createShaderMaterial()
 
-    // const materials = [
-    //   this._sideMaterial,
-    //   this._sideMaterial,
-    //   this._sideMaterial,
-    //   this._sideMaterial,
-    //   this._frontMaterial,
-    //   this._sideMaterial,
-    // ]
 
-    const materials = this._frontMaterial
+    const materials = [
+      sideMaterial,
+      sideMaterial,
+      sideMaterial,
+      sideMaterial,
+      frontMaterial,
+      sideMaterial,
+    ]
+
+    // const materials = this._frontMaterial
 
     this._mesh = new THREE.InstancedMesh(this._geometry, materials, this._numBoxes)
     this._mesh.rotation.set(...rotation)
@@ -169,17 +181,7 @@ export default class CubeView {
       )
       this._mesh.setMatrixAt(i, this._matrix)
     }
-    this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial( {
-      depthPacking: THREE.RGBADepthPacking,
-      // alphaTest: 0.8
-    } );
-    this._mesh.customDepthMaterial.onBeforeCompile = shader => {
-        // app specific instancing shader code
-        // shader.vertexShader = '#define DEPTH_PACKING 3201'+"\n"+THREE.ShaderChunk.instance_pars_vertex + "\n" + shader.vertexShader;
-        // shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>'+THREE.ShaderChunk.instance_vertex);
-      
-        // shader.fragmentShader = '#define DEPTH_PACKING 3201'+"\n" + shader.fragmentShader;
-    } 
+    this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking })
   }
   get mesh () {
     return this._mesh
@@ -196,10 +198,9 @@ export default class CubeView {
         this._mesh.geometry.attributes.textureIdx.array[i] = 0
       }
     } else {
-      this._frontMaterial.uniforms.textures.value = [
+      this._mesh.material[4].uniforms.textures.value = [
         this._textureManager.getTexture('characters').texture,
-        this._textureManager.getTexture('/assets/biest.png').texture,
-        this._textureManager.getTexture('/assets/displacementmap.jpg').texture
+        ...this._imageEntries.map(entry => this._textureManager.getTexture(entry.value).texture)
       ]
     }
     this._mesh.visible = visible
