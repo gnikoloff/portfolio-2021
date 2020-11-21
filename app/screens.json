@@ -43,8 +43,8 @@
   },
   "INFO": {
     "A frontend developer from Berlin": {
-      "x": 2,
-      "y": 3,
+      "x": 6,
+      "y": 8,
       "type": "WORD_LINE",
       "linksTo": "HOME",
       "isHoverable": true
@@ -60,12 +60,18 @@
     }
   },
   "PROJECTS": {
-    "Focus.de": {
-      "x": 4,
-      "y": 4,
-      "type": "WORD_LINE",
-      "isHoverable": true,
-      "linksTo": "HOME"
+    "Image": {
+      "x": 2,
+      "y": 2,
+      "type": "IMAGE",
+      "value": "/assets/biest.jpg"
+    },
+    "BACK": {
+      "x": 1,
+      "y": 2,
+      "type": "INDIVIDUAL_CHAR",
+      "linksTo": "HOME",
+      "isHoverable": true
     }
   }
 }

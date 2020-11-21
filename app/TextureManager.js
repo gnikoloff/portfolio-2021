@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 
 import {
+  ENTRY_TYPE_IMAGE,
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
   ENTRY_TYPE_SYMBOL_DOT,
@@ -20,183 +21,337 @@ export default class TextureManager {
     return instance
   }
   constructor (size) {
-    this._atlas = new Map()
-    this._atlasIdxX = 0
-    this._atlasIdxY = 0
-    this._entriesPerRow = 20
-
+    this._textureSet = new Map()
     this._size = size
-    this._cellWidth = this._size / this._entriesPerRow
 
-    this._texCanvas = document.createElement('canvas')
-    this._texCtx = this._texCanvas.getContext('2d')
+    this._domDebugContainer = document.getElementById('texture-manager-wrapper')
 
-    this._texture = new THREE.CanvasTexture(this._texCanvas)
+    const { canvas, ctx } = this._makeCanvas('characters', size)
+    const entriesPerRow = 20
+    const cellWidth = size / entriesPerRow
 
-    this._texCanvas.width = this._texCanvas.height = this._size
-    this._texCanvas.style.position = 'fixed'
-    this._texCanvas.style.top = this._texCanvas.style.left = '24px'
-    this._texCanvas.style.transform = 'scale(0.05)'
-    this._texCanvas.style.transformOrigin = '0 0'
-    this._texCanvas.style.border = '5px solid red'
-    document.body.appendChild(this._texCanvas)
-
-    for (let i = 0; i < this._entriesPerRow * this._entriesPerRow; i++) {
-      const xIdx = i % this._entriesPerRow
-      const yIdx = (i - xIdx) / this._entriesPerRow
-      const drawX = xIdx * this._cellWidth
-      const drawY = yIdx * this._cellWidth
-      this._texCtx.strokeStyle = 'red'
-      this._texCtx.lineWidth = 20
-      this._texCtx.strokeRect(drawX, drawY, this._cellWidth, this._cellWidth)
+    for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
+      const xIdx = i % entriesPerRow
+      const yIdx = (i - xIdx) / entriesPerRow
+      const drawX = xIdx * cellWidth
+      const drawY = yIdx * cellWidth
+      ctx.strokeStyle = 'red'
+      ctx.lineWidth = 20
+      ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
     }
-  }
-  get texture () {
-    return this._texture
+
+    this._textureSet.set('characters', {
+      size,
+      entriesPerRow,
+      cellWidth,
+      atlasIdxX: 0,
+      atlasIdxY: 0,
+      texture: new THREE.CanvasTexture(canvas),
+      canvas,
+      ctx,
+      atlas: new Map(),
+    })
+
   }
   get entriesPerRow () {
-    return this._entriesPerRow
+    return entriesPerRow
   }
-  _drawChar (entry) {
-    const drawX = this._atlasIdxX * this._cellWidth
-    const drawY = this._atlasIdxY * this._cellWidth
-    this._texCtx.save()
-    this._texCtx.fillStyle = 'black'
-    this._texCtx.font = `${150}px monospace`
-    this._texCtx.textAlign = 'center'
-    this._texCtx.translate(drawX + this._cellWidth / 2, drawY + this._cellWidth / 2 + 85)
-    this._texCtx.fillText(entry.value, 0, 0)
-    this._texCtx.restore()
-    const texAtlasX = this._atlasIdxX / this._entriesPerRow
-    const texAtlasY = 1.0 - (this._atlasIdxY + 1) / this._entriesPerRow
+  _drawImage (entry, textureId) {
+    const { ctx, entriesPerRow, size, atlas } = this._textureSet.get(textureId)
+    const imageSource = entry.value
+    const texCoords = []
+
+    const imageCellsHeight = 20
+
+    for (let i = 0; i < entriesPerRow * imageCellsHeight; i++) {
+      const xIdx = i % entriesPerRow
+      const yIdx = (i - xIdx) / entriesPerRow
+      const texAtlasX = xIdx / entriesPerRow
+      const texAtlasY = yIdx / entriesPerRow
+      texCoords.push([texAtlasX, texAtlasY])
+    }
+
+    const image = new Image()
+    image.onload = () => {
+      ctx.save()
+      ctx.drawImage(image, 0, 0, size, size)
+
+      // for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
+      //   const xIdx = i % entriesPerRow
+      //   const yIdx = (i - xIdx) / entriesPerRow
+      //   const drawX = xIdx * cellWidth
+      //   const drawY = yIdx * cellWidth
+      //   ctx.strokeStyle = 'red'
+      //   ctx.lineWidth = 3
+      //   ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
+      // }
+      atlas.set(entry.value, texCoords)
+      // debugger
+
+      ctx.restore()
+    }
+    image.src = imageSource
+
+    return texCoords
+  }
+  _drawChar (entry, textureId) {
+    const textureData = this._textureSet.get(textureId)
+    const {
+      ctx,
+      atlas,
+      cellWidth,
+      entriesPerRow
+    } = textureData
+
+    let {
+      atlasIdxX,
+      atlasIdxY,
+    } = textureData
+
+    const drawX = atlasIdxX * cellWidth
+    const drawY = atlasIdxY * cellWidth
+    ctx.save()
+    ctx.fillStyle = 'black'
+    ctx.font = `${150}px monospace`
+    ctx.textAlign = 'center'
+    ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2 + 85)
+    ctx.fillText(entry.value, 0, 0)
+    ctx.restore()
+    const texAtlasX = atlasIdxX / entriesPerRow
+    const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
 
     const texAtlasCoords = [texAtlasX, texAtlasY]
     
-    this._atlas.set(entry.value, texAtlasCoords)
+    atlas.set(entry.value, texAtlasCoords)
 
-    this._atlasIdxX++
+    atlasIdxX++
 
-    if (this._atlasIdxX >= this._entriesPerRow) {
-      this._atlasIdxX = 0
-      this._atlasIdxY++
+    if (atlasIdxX >= entriesPerRow) {
+      atlasIdxX = 0
+      atlasIdxY++
     }
+
+    this._textureSet.set(textureId, {
+      ...textureData,
+      atlasIdxX,
+      atlasIdxY
+    })
 
     return texAtlasCoords
   }
-  _drawDecoration (entry) {
-    const drawX = this._atlasIdxX * this._cellWidth
-    const drawY = this._atlasIdxY * this._cellWidth
-    this._texCtx.save()
-    // this._texCtx.fillStyle = 'white'
-    this._texCtx.translate(drawX + this._cellWidth / 2, drawY + this._cellWidth / 2)
+  _drawDecoration (entry, textureId) {
+    const textureData = this._textureSet.get(textureId)
+    const {
+      ctx,
+      atlas,
+      cellWidth,
+      entriesPerRow,
+    } = textureData
+
+    let {
+      atlasIdxX,
+      atlasIdxY,
+    } = textureData
+
+    const drawX = atlasIdxX * cellWidth
+    const drawY = atlasIdxY * cellWidth
+    ctx.save()
+    // ctx.fillStyle = 'white'
+    ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2)
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT) {
-      this._texCtx.beginPath()
-      this._texCtx.arc(0, 0, 50, 0, Math.PI * 2, false)
-      this._texCtx.closePath()
-      this._texCtx.fill()
+      ctx.beginPath()
+      ctx.arc(0, 0, 50, 0, Math.PI * 2, false)
+      ctx.closePath()
+      ctx.fill()
     } else if (entry.type === 'CROSS') {
       const radius = 50
-      this._texCtx.beginPath()
-      this._texCtx.moveTo(-radius, -radius)
-      this._texCtx.lineTo(radius, radius)
-      this._texCtx.stroke()
-      this._texCtx.beginPath()
-      this._texCtx.moveTo(radius, -radius)
-      this._texCtx.lineTo(-radius, radius)
-      this._texCtx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(-radius, -radius)
+      ctx.lineTo(radius, radius)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(radius, -radius)
+      ctx.lineTo(-radius, radius)
+      ctx.stroke()
     }
-    this._texCtx.restore()
-    const texAtlasX = this._atlasIdxX / this._entriesPerRow
-    const texAtlasY = 1.0 - (this._atlasIdxY + 1) / this._entriesPerRow
+    ctx.restore()
+    const texAtlasX = atlasIdxX / entriesPerRow
+    const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
 
     const texAtlasCoords = [texAtlasX, texAtlasY]
     
-    this._atlas.set(entry.type, texAtlasCoords)
+    atlas.set(entry.type, texAtlasCoords)
 
-    this._atlasIdxX++
+    atlasIdxX++
 
-    if (this._atlasIdxX >= this._entriesPerRow) {
-      this._atlasIdxX = 0
-      this._atlasIdxY++
+    if (atlasIdxX >= entriesPerRow) {
+      atlasIdxX = 0
+      atlasIdxY++
     }
+
+    this._textureSet.set(textureId, {
+      ...textureData,
+      atlasIdxX,
+      atlasIdxY
+    })
 
     return texAtlasCoords
   }
-  _drawWordLine (entry) {
+  _drawWordLine (entry, textureId) {
+    const textureData = this._textureSet.get(textureId)
+    const {
+      ctx,
+      atlas,
+      cellWidth,
+      entriesPerRow
+    } = textureData
 
-    this._texCtx.save()
-    this._texCtx.fillStyle = 'black'
-    this._texCtx.font = `${150}px monospace`
+    let {
+      atlasIdxX,
+      atlasIdxY,
+    } = textureData
 
-    const textMetrics = this._texCtx.measureText(entry.value)
+    ctx.save()
+    ctx.fillStyle = 'black'
+    ctx.font = `${150}px monospace`
+
+    const textMetrics = ctx.measureText(entry.value)
     
-    const cellsOccupied = Math.ceil(textMetrics.width / this._cellWidth)
+    const cellsOccupied = Math.ceil(textMetrics.width / cellWidth)
     
     // this._atlasIdX += cellsOccupied
-    // this._atlasIdxY += 1
+    // atlasIdxY += 1
 
 
 
-    // this._atlasIdxX++
+    // atlasIdxX++
     
-    if (this._atlasIdxX + cellsOccupied > this._entriesPerRow) {
-      this._atlasIdxX = 0
-      this._atlasIdxY++
+    if (atlasIdxX + cellsOccupied > entriesPerRow) {
+      atlasIdxX = 0
+      atlasIdxY++
     }
 
-    const drawX = this._atlasIdxX * this._cellWidth
-    const drawY = this._atlasIdxY * this._cellWidth
+    const drawX = atlasIdxX * cellWidth
+    const drawY = atlasIdxY * cellWidth
 
-    this._texCtx.strokeStyle = 'red'
-    this._texCtx.lineWidth = 10
+    ctx.strokeStyle = 'red'
+    ctx.lineWidth = 10
 
     const texAtlasesForLine = []
     
     for (let i = 0; i < cellsOccupied; i++) {
-      const x = drawX + i * this._cellWidth
-      const texAtlasX = this._atlasIdxX / this._entriesPerRow + i / this._entriesPerRow
-      const texAtlasY = 1.0 - (this._atlasIdxY + 1) / this._entriesPerRow
+      const x = drawX + i * cellWidth
+      const texAtlasX = atlasIdxX / entriesPerRow + i / entriesPerRow
+      const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
       texAtlasesForLine.push([texAtlasX, texAtlasY])
-      // this._texCtx.strokeRect(x, drawY, this._cellWidth, this._cellWidth)
+      // ctx.strokeRect(x, drawY, cellWidth, cellWidth)
     }
-    this._atlasIdxX += cellsOccupied
+    atlasIdxX += cellsOccupied
 
-    this._texCtx.translate(drawX, drawY + this._cellWidth / 2 + 85)
-    this._texCtx.fillText(entry.value, 0, 0)
-    this._texCtx.restore()
+    ctx.translate(drawX, drawY + cellWidth / 2 + 85)
+    ctx.fillText(entry.value, 0, 0)
+    ctx.restore()
 
-    this._atlas.set(entry.value, texAtlasesForLine)
+    atlas.set(entry.value, texAtlasesForLine)
 
+    this._textureSet.set(textureId, {
+      ...textureData,
+      atlasIdxX,
+      atlasIdxY
+    })
 
     return texAtlasesForLine
   }
-  _addAtlasEntry (entry) {
-    let texAtlasCoords = this._atlas.get(entry.value)
-    console.log(entry.value)
+  _addAtlasEntry (entry, textureId) {
+    const { atlas, texture } = this._textureSet.get(textureId)
+    let texAtlasCoords = atlas.get(entry.value)
     if (texAtlasCoords) {
-      console.log('no need to paint again, fetch from atlas')
       return texAtlasCoords
     }
-    if (entry.type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
-      texAtlasCoords = this._drawChar(entry)
+    if (entry.type === ENTRY_TYPE_IMAGE) {
+      texAtlasCoords = this._drawImage(entry, textureId)
+    } else if (entry.type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
+      texAtlasCoords = this._drawChar(entry, textureId)
     } else if (entry.type === ENTRY_TYPE_WORD_LINE) {
-      texAtlasCoords = this._drawWordLine(entry)
+      texAtlasCoords = this._drawWordLine(entry, textureId)
     } else {
-      texAtlasCoords = this._drawDecoration(entry)
+      texAtlasCoords = this._drawDecoration(entry, textureId)
     }
-    this._texture.needsUpdate = true
+    texture.needsUpdate = true
     return texAtlasCoords
   }
-  getEntryTexCoordinate (entry) {
+  _makeCanvas (textureId, size) {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    canvas.dataset.textureId = textureId
+    canvas.width = canvas.height = size == null ? this._size : size
+    this._domDebugContainer.appendChild(canvas)
+    return { canvas, ctx }
+  }
+  getTexture (textureName) {
+    const textureData = this._textureSet.get(textureName)
+    if (!textureData) {
+      throw new Error('Texture data not found')
+    }
+    return textureData
+  }
+  getEntryTexCoordinate (entry, textureId = 'characters') {
+    const textureData = this._textureSet.get(textureId)
+    let atlas
+    // debugger
+    if (textureData) {
+      atlas = textureData.atlas
+    } else {
+      let size = this._size
+      let lineWidth = 20
+      if (entry.type === ENTRY_TYPE_IMAGE) {
+        size = 1024
+        lineWidth = 5
+      }
+      
+      const { canvas, ctx } = this._makeCanvas(textureId, size)
+
+      atlas = new Map()
+
+      const entriesPerRow = 20
+      const cellWidth = size / entriesPerRow
+
+      console.log(size)
+
+      for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
+        const xIdx = i % entriesPerRow
+        const yIdx = (i - xIdx) / entriesPerRow
+        const drawX = xIdx * cellWidth
+        const drawY = yIdx * cellWidth
+        ctx.strokeStyle = 'red'
+        ctx.lineWidth = lineWidth
+        ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
+      }
+      
+      this._textureSet.set(textureId, {
+        size,
+        entriesPerRow,
+        cellWidth,
+        atlasIdxX: 0,
+        atlasIdxY: 0,
+        texture: new THREE.CanvasTexture(canvas),
+        canvas,
+        ctx,
+        atlas: new Map(),
+      })
+    }
     let texCoordinates
     // TODO fix decoration logic
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT || entry.type === "CROSS") {
-      // texCoordinates = this._atlas.get(entry.type)
+      // texCoordinates = atlas.get(entry.type)
     } else {
-      texCoordinates = this._atlas.get(entry.value)
+      texCoordinates = atlas.get(entry.value, textureId)
+      if (entry.type === ENTRY_TYPE_IMAGE) {
+        // debugger
+      }
     }
     if (!texCoordinates) {
-      texCoordinates = this._addAtlasEntry(entry)
+      texCoordinates = this._addAtlasEntry(entry, textureId)
       // throw new Error('cant find texture coordinate for this entry')
     }
     return texCoordinates

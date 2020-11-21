@@ -11,12 +11,34 @@
     .hovering {
       cursor: pointer !important;
     }
+    #texture-manager-wrapper {
+      position: fixed;
+      top: 0px;
+      left: 0px;
+      width: 350px;
+      height: 100vh;
+      overflow: scroll;
+      z-index: 1;
+      padding: 10px; 
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+    }
+    #texture-manager-wrapper canvas {
+      width: 100%;
+      border: 1px solid red;
+      margin-bottom: 2rem;
+    }
+    #texture-manager-wrapper canvas:last-of-type {
+      margin-bottom: 0;
+    }
   </style>
 
 </head>
 <body>
   
   <div id="app-container"></div>
+
+  <div id="texture-manager-wrapper"></div>
 
   <script src="index.js"></script>
 

@@ -31,7 +31,16 @@ const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0
 const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: true })
 const raycaster = new THREE.Raycaster()
 
-TextureManager.init({ size: Math.min(4096, renderer.capabilities.maxTextureSize) })
+const texManager = TextureManager.init({ size: Math.min(4096, renderer.capabilities.maxTextureSize) })
+
+const entry = {
+  value: '/assets/biest.jpg', type: "IMAGE"
+}
+texManager.getEntryTexCoordinate(entry, entry.value)
+// const entry1 = {
+//   value: '/assets/displacementmap2.jpg', type: "IMAGE"
+// }
+// texManager.getEntryTexCoordinate(entry1, entry1.value)
 
 var light = new THREE.DirectionalLight(0x000000, 1);
 light.position.set(30, 700, -500);
@@ -70,7 +79,9 @@ let viewA = new CubeView({
 })
 viewA.interactable = true
 viewA.visible = true
-viewA.drawScreen(screens[VIEW_HOME])
+setTimeout(() => {
+  viewA.drawScreen(screens[VIEW_HOME])
+}, 1000)
 
 let viewB = new CubeView({
   radius: 20,
@@ -80,16 +91,12 @@ let viewB = new CubeView({
 
 scene.add(viewA.mesh)
 scene.add(viewB.mesh)
-console.log(viewA.mesh.rotation)
-console.log(viewB.mesh.rotation)
 
 scene.add(new THREE.CameraHelper(light.shadow.camera))
 
-// eventEmitter.on(EVT_HOVER_MENU_ITEM, itemKey => {
-//   viewB.drawScreen(screens[itemKey])
-// })
+// load all images
 
-new OrbitControls(camera)
+new OrbitControls(camera, domContainer)
 document.body.addEventListener('mousemove', onMouseMove)
 document.body.addEventListener('click', onMouseClick)
 updateFrame()
