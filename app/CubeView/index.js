@@ -241,14 +241,14 @@ export default class CubeView {
         
         Object.entries(this._screenData).forEach(keyValue => {
           const key = keyValue[0]
-          const { x, y, type, linksTo, isHoverable = false } = keyValue[1]
+          const { x, y, type, linksTo } = keyValue[1]
 
 
           if (key === DECORATION_TYPE_BORDER) {
             return
           }
 
-          if (!isHoverable) {
+          if (!linksTo) {
             return
           }
 

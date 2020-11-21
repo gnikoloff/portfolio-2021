@@ -17,28 +17,24 @@
       "x": 6,
       "y": 8,
       "type": "INDIVIDUAL_CHAR",
-      "isHoverable": true,
       "linksTo": "PROJECTS"
     },
     "INFO": {
       "x": 8,
       "y": 10,
       "type": "INDIVIDUAL_CHAR",
-      "isHoverable": true,
       "linksTo": "INFO"
     },
     "SOCIAL": {
       "x": 7,
       "y": 12,
       "type": "INDIVIDUAL_CHAR",
-      "isHoverable": true,
       "linksTo": "SOCIAL"
     },
     "GET IN TOUCH": {
       "x": 4,
       "y": 17,
-      "type": "INDIVIDUAL_CHAR",
-      "isHoverable": true
+      "type": "INDIVIDUAL_CHAR"
     }
   },
   "INFO": {
@@ -46,8 +42,7 @@
       "x": 6,
       "y": 8,
       "type": "WORD_LINE",
-      "linksTo": "HOME",
-      "isHoverable": true
+      "linksTo": "HOME"
     },
   },
   "SOCIAL": {
@@ -55,8 +50,7 @@
       "x": 1,
       "y": 2,
       "type": "INDIVIDUAL_CHAR",
-      "linksTo": "HOME",
-      "isHoverable": true
+      "linksTo": "HOME"
     }
   },
   "PROJECTS": {
@@ -70,8 +64,7 @@
       "x": 1,
       "y": 2,
       "type": "INDIVIDUAL_CHAR",
-      "linksTo": "HOME",
-      "isHoverable": true
+      "linksTo": "HOME"
     }
   }
 }
