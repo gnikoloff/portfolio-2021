@@ -31,6 +31,7 @@ const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 1000)
 const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: true })
 const raycaster = new THREE.Raycaster()
+const clock = new THREE.Clock()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 const texManager = TextureManager.init({ size: maxTextureSize })
@@ -50,7 +51,7 @@ imageEntries.forEach(entry => texManager.getEntryTexCoordinate(entry, entry.valu
 const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light2 );
 var light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(8, 30, 40);
+light.position.set(8, 30, 40)
 light.castShadow = true; // default false
 light.shadow.mapSize.width = maxTextureSize;
 light.shadow.mapSize.height = maxTextureSize;
@@ -74,7 +75,7 @@ renderer.shadowMap.enabled = true
 renderer.outputEncoding = THREE.sRGBEncoding
 domContainer.appendChild(renderer.domElement)
 
-camera.position.set(0, 0, 70)
+camera.position.set(0, 0, 45)
 camera.lookAt(new THREE.Vector3())
 
 let viewA = new CubeView({
@@ -174,6 +175,7 @@ function onMouseMove (e) {
 
 function updateFrame (ts = 0) {
   const opts = {
+    dt: clock.getDelta(),
     raycaster,
     mouse,
     camera

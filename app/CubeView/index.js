@@ -77,10 +77,9 @@ export default class CubeView {
     this._interactable = false
 
     this._matrix = new THREE.Matrix4()
-    this._boxPosition = new THREE.Vector3()
-    this._boxRotation = new THREE.Quaternion()
-    this._boxScale = new THREE.Vector3()
     this._dummy = new Object3D()
+    this._scales = new Float32Array(this._numBoxes).fill(1)
+    this._scaleTargets = new Float32Array(this._numBoxes).fill(1)
 
     this._screenData = null
 
@@ -172,14 +171,10 @@ export default class CubeView {
       const yIdx = (i - xIdx) / this._radius
       const x = xIdx - this._radius / 2
       const y = yIdx - this._radius / 2
-      this._boxPosition.set(x, y, 0)
-      this._boxScale.set(1, 1, 1)
-      this._matrix.compose(
-        this._boxPosition,
-        this._boxRotation,
-        this._boxScale
-      )
-      this._mesh.setMatrixAt(i, this._matrix)
+      this._dummy.position.set(x, y, 0)
+      this._dummy.scale.set(1, 1, HOVERED_SCALE)
+      this._dummy.updateMatrix()
+      this._mesh.setMatrixAt(i, this._dummy.matrix)
     }
     this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking })
   }
@@ -325,6 +320,7 @@ export default class CubeView {
   }
 
   onUpdateFrame ({
+    dt,
     raycaster,
     mouse,
     camera
@@ -361,8 +357,6 @@ export default class CubeView {
 
           // this._matrix.identity()
 
-            this._dummy.matrix.identity()
-
           if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
             if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
               const startIdx = x + this._radius * (this._radius - y)
@@ -371,10 +365,11 @@ export default class CubeView {
                 const yIdx = (n - xIdx) / this._radius
                 const x = xIdx - this._radius / 2
                 const y = yIdx - this._radius / 2
-                this._dummy.position.set(x, y, 0)
-                this._dummy.scale.set(1, 1, HOVERED_SCALE)
-                this._dummy.updateMatrix()
-                this._mesh.setMatrixAt(n, this._dummy.matrix)
+                // this._dummy.position.set(x, y, 0)
+                // this._dummy.scale.set(1, 1, HOVERED_SCALE)
+                // this._dummy.updateMatrix()
+                // this._mesh.setMatrixAt(n, this._dummy.matrix)
+                this._scaleTargets[n] = HOVERED_SCALE
               }
 
               this._mesh.instanceMatrix.needsUpdate = true
@@ -394,10 +389,11 @@ export default class CubeView {
                 const yIdx = (i - xIdx) / this._radius
                 const x = xIdx - this._radius / 2
                 const y = yIdx - this._radius / 2
-                this._dummy.position.set(x, y, 0)
-                this._dummy.scale.set(1, 1, HOVERED_SCALE)
-                this._dummy.updateMatrix()
-                this._mesh.setMatrixAt(i, this._dummy.matrix)
+                // this._dummy.position.set(x, y, 0)
+                // this._dummy.scale.set(1, 1, HOVERED_SCALE)
+                // this._dummy.updateMatrix()
+                // this._mesh.setMatrixAt(i, this._dummy.matrix)
+                this._scaleTargets[i] = HOVERED_SCALE
               }
               this._mesh.instanceMatrix.needsUpdate = true
               hoveredItem = { key, linksTo }
@@ -418,26 +414,36 @@ export default class CubeView {
             const yIdx = (i - xIdx) / this._radius
             const x = xIdx - this._radius / 2
             const y = yIdx - this._radius / 2
-            this._dummy.position.set(x, y, 0)
-            this._dummy.scale.set(1, 1, 1)
-            this._dummy.updateMatrix()
-            this._mesh.setMatrixAt(i, this._dummy.matrix)
+            // this._dummy.position.set(x, y, 0)
+            // this._dummy.scale.set(1, 1, 1)
+            // this._dummy.updateMatrix()
+            // this._mesh.setMatrixAt(i, this._dummy.matrix)
+            this._scaleTargets[i] = 1
           }
           this._mesh.instanceMatrix.needsUpdate = true
         }
       }
-      // console.log(hoveredItem, oldHoveredItem)
 
+      console.log(this._scaleTargets)
 
-      // console.log(hoveredItem)
+      this._dummy.matrix.identity()
+      
+      for (let i = 0; i < this._numBoxes; i++) {
+        this._scales[i] += (this._scaleTargets[i] - this._scales[i]) * (dt * 20)
+        // this._scales[i] = this._scaleTargets[i]
+        const xIdx = i % this._radius
+        const yIdx = (i - xIdx) / this._radius
+        const x = xIdx - this._radius / 2
+        const y = yIdx - this._radius / 2
+        this._dummy.position.set(x, y, 0)
+        this._dummy.scale.set(1, 1, this._scales[i])
+        this._dummy.updateMatrix()
+        this._mesh.setMatrixAt(i, this._dummy.matrix)
+      }
       
       if (this._interactable) {
         store.dispatch(setEntryHover(hoveredItem))
       }
-
-      
-
-      
       
     } else {
       if (this._interactable) {
