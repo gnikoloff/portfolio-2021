@@ -141,21 +141,21 @@ export default class CubeView {
 
           vec4 texelColor = texture2D(textures[0], transformedUV);
   
-          // float borderWidth = 0.05;
-          // float aspect = 1.0;
+          float borderWidth = 0.05;
+          float aspect = 1.0;
 
-          // float maxX = 1.0 - borderWidth;
-          // float minX = borderWidth;
-          // float maxY = maxX / aspect;
-          // float minY = minX / aspect;
+          float maxX = 1.0 - borderWidth;
+          float minX = borderWidth;
+          float maxY = maxX / aspect;
+          float minY = minX / aspect;
 
-          // vec4 baseColor; 
-          // if (vUv.x < maxX && vUv.x > minX && vUv.y < maxY && vUv.y > minY) {
-          //   baseColor = vec4(0.5, 0.5, 0.5, 1.0);
-          // } else {
-          //   baseColor = vec4(1.0, 0.5, 0.5, 1.0);
-          // }
-          vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
+          vec4 baseColor; 
+          if (vUv.x < maxX && vUv.x > minX && vUv.y < maxY && vUv.y > minY) {
+            baseColor = vec4(0.5, 0.5, 0.5, 1.0);
+          } else {
+            baseColor = vec4(1.0, 0.5, 0.5, 1.0);
+          }
+          // vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
 
           diffuseColor = mix(baseColor, texelColor, texelColor.a);
         `
@@ -262,14 +262,11 @@ export default class CubeView {
     for (let i = 0; i < this._numBoxes; i++) {
       this._scaleTargets[i] = 1 + sinTheta * this._transitioningScaleTargets[i]
     }
-
-    console.log(sinTheta)
   }
   
   drawScreen (screenData) {
     if (!screenData) {
       throw new Error('Provided no view screenData')
-      return
     }
     this._screenData = screenData
     Object.entries(screenData).map(keyValue => {
