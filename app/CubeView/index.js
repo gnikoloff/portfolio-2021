@@ -21,6 +21,8 @@ import { Object3D } from 'three'
 
 const HOVERED_SCALE = 1.1
 
+console.log(THREE.ShaderChunk)
+
 const createShaderMaterial = ({
   textures,
   textureSize,
@@ -45,8 +47,7 @@ const createShaderMaterial = ({
     ]),
     lights: true,
     vertexShader: wVertex,
-    fragmentShader: wFragment,
-    depthPacking: THREE.RGBADepthPacking,
+    fragmentShader: wFragment
   })
   material.onBeforeCompile = shader => {
     Object.entries(vertexShaderSnippets).forEach(keyValue => {
@@ -75,16 +76,18 @@ export default class CubeView {
     this._radius = radius
     this._numBoxes = radius * radius
     this._interactable = false
+    this._transitioning = false
 
     this._matrix = new THREE.Matrix4()
     this._dummy = new Object3D()
     this._scales = new Float32Array(this._numBoxes).fill(1)
     this._scaleTargets = new Float32Array(this._numBoxes).fill(1)
+    this._transitioningScaleTargets = new Float32Array(this._numBoxes).fill(1)
 
     this._screenData = null
 
-    this._geometry = new THREE.BoxBufferGeometry(1, 1, this._radius)
-    // this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0, this._radius / 2))
+    this._geometry = new THREE.BoxBufferGeometry(1, 1, 1)
+    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0, this._radius / 2))
 
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     const textureIndices = new Float32Array(this._numBoxes)
@@ -107,13 +110,14 @@ export default class CubeView {
         'varying vec3 vLightFront;': `
           attribute vec2 letterOffset;
           attribute float textureIdx;
+          uniform mat3 uvTransform;
           varying vec2 vUv;
           varying vec3 vLightFront;
           varying vec2 vLetterOffset;
           varying float vTextureIdx;
         `,
         '#include <uv_vertex>': `
-          vUv = uv;
+          vUv = ( uvTransform * vec3( uv, 1 ) ).xy;
           vLetterOffset = letterOffset;
           vTextureIdx = textureIdx;
         `
@@ -128,25 +132,49 @@ export default class CubeView {
           varying float vTextureIdx;
         `,
         '#include <map_fragment>': `
-          vec4 texelColor = vec4(0.0);
+          // vec4 texelColor = vec4(0.0);
           vec2 transformedUV = vUv * vec2(1.0 / textureSize) + vLetterOffset;
-          if (vTextureIdx < 1.0) {
-            texelColor = texture2D(textures[0], transformedUV);
-          } else if (vTextureIdx < 2.0) {
-            texelColor = texture2D(textures[1], transformedUV);
-          } else if (vTextureIdx < 3.0) {
-            texelColor = texture2D(textures[2], transformedUV);
-          } else if (vTextureIdx < 4.0) {
-            texelColor = texture2D(textures[3], transformedUV);
-          }
-          vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0); 
+          // if (vTextureIdx < 1.0) {
+          //   texelColor = texture2D(textures[0], transformedUV);
+          // } else if (vTextureIdx < 2.0) {
+          //   texelColor = texture2D(textures[1], transformedUV);
+          // } else if (vTextureIdx < 3.0) {
+          //   texelColor = texture2D(textures[2], transformedUV);
+          // } else if (vTextureIdx < 4.0) {
+          //   texelColor = texture2D(textures[3], transformedUV);
+          // }
+
+          vec4 texelColor = texture2D(textures[0], transformedUV);
+  
+          // float borderWidth = 0.05;
+          // float aspect = 1.0;
+
+          // float maxX = 1.0 - borderWidth;
+          // float minX = borderWidth;
+          // float maxY = maxX / aspect;
+          // float minY = minX / aspect;
+
+          // vec4 baseColor; 
+          // if (vUv.x < maxX && vUv.x > minX && vUv.y < maxY && vUv.y > minY) {
+          //   baseColor = vec4(0.5, 0.5, 0.5, 1.0);
+          // } else {
+          //   baseColor = vec4(1.0, 0.5, 0.5, 1.0);
+          // }
+          vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
+
           diffuseColor = mix(baseColor, texelColor, texelColor.a);
         `
       }
     })
 
-    const sideMaterial = createShaderMaterial()
-
+    const sideMaterial = createShaderMaterial({
+      fragmentShaderSnippets: {
+        '#include <map_fragment>': `
+          vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
+          diffuseColor = baseColor;
+        `
+      }
+    })
 
     const materials = [
       sideMaterial,
@@ -177,27 +205,31 @@ export default class CubeView {
       this._mesh.setMatrixAt(i, this._dummy.matrix)
     }
     this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking })
+
+    eventEmitter.on('transitioning', this._onTransition.bind(this))
+    eventEmitter.on('transitioning-start', this._onTransitionStart.bind(this))
+    eventEmitter.on('transitioning-end', this._onTransitionEnd.bind(this))
   }
   get mesh () {
     return this._mesh
   }
 
   set visible (visible) {
-    if (!visible) {
-      const {
-        texCoordinates
-      } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
-      for (let i = 0; i < this._numBoxes; i++) {
-        this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
-        this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
-        this._mesh.geometry.attributes.textureIdx.array[i] = 0
-      }
-    } else {
-      this._mesh.material[4].uniforms.textures.value = [
-        this._textureManager.getTexture('characters').texture,
-        ...this._imageEntries.map(entry => this._textureManager.getTexture(entry.value).texture)
-      ]
-    }
+    // if (!visible) {
+    //   const {
+    //     texCoordinates
+    //   } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
+    //   for (let i = 0; i < this._numBoxes; i++) {
+    //     this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
+    //     this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
+    //     this._mesh.geometry.attributes.textureIdx.array[i] = 0
+    //   }
+    // } else {
+    //   this._mesh.material[4].uniforms.textures.value = [
+    //     this._textureManager.getTexture('characters').texture,
+    //     ...this._imageEntries.map(entry => this._textureManager.getTexture(entry.value).texture)
+    //   ]
+    // }
     this._mesh.visible = visible
   }
 
@@ -210,18 +242,32 @@ export default class CubeView {
     this._interactable = interactable
   }
 
-  addToRotation (rotation) {
-    this._mesh.rotation.x += rotation[0]
-    this._mesh.rotation.y += rotation[1]
-    this._mesh.rotation.z += rotation[2]
+  _onTransitionStart () {
+    this._transitioning = true
+    for (let i = 0; i < this._transitioningScaleTargets.length; i++) {
+      this._transitioningScaleTargets[i] = Math.random() * 5 - 2.5
+    }
   }
 
-  get rotation () {
-    return this._mesh.rotation
+  _onTransitionEnd () {
+    this._transitioning = false
   }
 
-  clearScreen () {
-    this._screenData = null
+  _onTransition (v) {
+    // const float pi = 3.14;
+    // const float frequency = 10; // Frequency in Hz
+    // return 0.5*(1+sin(2 * pi * frequency * time));
+
+    let sinTheta = Math.sin(v * Math.PI)
+    if (Math.abs(sinTheta) < Number.EPSILON) {
+      sinTheta = 0
+    }
+
+    for (let i = 0; i < this._numBoxes; i++) {
+      this._scaleTargets[i] = 1 + sinTheta * this._transitioningScaleTargets[i]
+    }
+
+    console.log(sinTheta)
   }
   
   drawScreen (screenData) {
@@ -279,7 +325,7 @@ export default class CubeView {
         }
       } else if (type === ENTRY_TYPE_WORD_LINE) {
         const entry = {
-          value: key, x, y, type, fontSize: keyValue[1].fontSize
+          value: key, x, y, type, textureXOffset: keyValue[1].textureXOffset, fontSize: keyValue[1].fontSize
         }
         console.log('allocating ENTRY_TYPE_WORD_LINE texture for ' + key)
         const {
@@ -331,7 +377,7 @@ export default class CubeView {
 
     let instanceId
 
-    if (intersection.length > 0 && this._interactable) {
+    if (intersection.length > 0 && this._interactable && !this._transitioning) {
       instanceId = intersection[0] && intersection[0].instanceId
       const instanceXIdx = instanceId % this._radius
       const instanceYIdx = this._radius - (instanceId - instanceXIdx) / this._radius
@@ -377,7 +423,7 @@ export default class CubeView {
             }
           } else if (type === ENTRY_TYPE_WORD_LINE) {
             const entry = {
-              value: key, x, y, type, fontSize: keyValue[1].fontSize
+              value: key, x, y, type, textureXOffset: keyValue[1].textureXOffset, fontSize: keyValue[1].fontSize
             }
             const startIdx = x + this._radius * (this._radius - y)
             const {
@@ -423,21 +469,6 @@ export default class CubeView {
           this._mesh.instanceMatrix.needsUpdate = true
         }
       }
-
-      this._dummy.matrix.identity()
-      
-      for (let i = 0; i < this._numBoxes; i++) {
-        this._scales[i] += (this._scaleTargets[i] - this._scales[i]) * (dt * 20)
-        // this._scales[i] = this._scaleTargets[i]
-        const xIdx = i % this._radius
-        const yIdx = (i - xIdx) / this._radius
-        const x = xIdx - this._radius / 2
-        const y = yIdx - this._radius / 2
-        this._dummy.position.set(x, y, 0)
-        this._dummy.scale.set(1, 1, this._scales[i])
-        this._dummy.updateMatrix()
-        this._mesh.setMatrixAt(i, this._dummy.matrix)
-      }
       
       if (this._interactable) {
         store.dispatch(setEntryHover(hoveredItem))
@@ -448,6 +479,22 @@ export default class CubeView {
         store.dispatch(setEntryHover(null))
       }
     }
+
+    this._dummy.matrix.identity()
+
+    for (let i = 0; i < this._numBoxes; i++) {
+      this._scales[i] += (this._scaleTargets[i] - this._scales[i]) * (dt * 20)
+      // this._scales[i] = this._scaleTargets[i]
+      const xIdx = i % this._radius
+      const yIdx = (i - xIdx) / this._radius
+      const x = xIdx - this._radius / 2
+      const y = yIdx - this._radius / 2
+      this._dummy.position.set(x, y, 0)
+      this._dummy.scale.set(1, 1, this._scales[i])
+      this._dummy.updateMatrix()
+      this._mesh.setMatrixAt(i, this._dummy.matrix)
+    }
+    this._mesh.instanceMatrix.needsUpdate = true
 
     this._mesh.geometry.attributes.textureIdx.needsUpdate = true
     this._mesh.geometry.attributes.letterOffset.needsUpdate = true

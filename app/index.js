@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import OrbitControlsA from 'three-orbit-controls'
-import { animate } from 'popmotion'
+import * as popmotion from 'popmotion'
 
 import screens from './screens.json'
 
@@ -28,13 +28,14 @@ const domContainer = document.getElementById('app-container')
 const dpr = window.devicePixelRatio
 const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 1000)
+const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 50)
 const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: true })
 const raycaster = new THREE.Raycaster()
 const clock = new THREE.Clock()
+const container = new THREE.Object3D()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
-// const maxTextureSize = 512
+// const maxTextureSize = 256
 const texManager = TextureManager.init({ size: maxTextureSize })
 
 const imageEntries = Object.entries(screens).reduce((acc, keyValue) => {
@@ -52,7 +53,7 @@ imageEntries.forEach(entry => texManager.getEntryTexCoordinate(entry, entry.valu
 const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light2 );
 var light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(8, 30, 40)
+light.position.set(8, 1000, 400)
 light.castShadow = true; // default false
 light.shadow.mapSize.width = maxTextureSize;
 light.shadow.mapSize.height = maxTextureSize;
@@ -62,6 +63,7 @@ light.shadow.camera.top = 20;
 light.shadow.camera.bottom = -20;
 light.shadow.camera.near = 0.5;
 light.shadow.camera.far = 2000
+
 
 var helper = new THREE.DirectionalLightHelper(light)
 scene.add(helper);
@@ -79,6 +81,8 @@ domContainer.appendChild(renderer.domElement)
 camera.position.set(0, 0, 45)
 camera.lookAt(new THREE.Vector3())
 
+scene.add(container)
+
 let viewA = new CubeView({
   radius: 20,
   lightPosition: light.position,
@@ -92,13 +96,14 @@ viewA.name = 'view a'
 let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position,
-  rotation: [0, Math.PI, 0],
+  rotation: [0, -Math.PI / 2, 0],
   imageEntries
 })
+viewB.visible = true
 viewB.name = 'view b'
 
-scene.add(viewA.mesh)
-scene.add(viewB.mesh)
+container.add(viewA.mesh)
+container.add(viewB.mesh)
 
 // scene.add(new THREE.CameraHelper(light.shadow.camera))
 
@@ -128,39 +133,50 @@ function onMouseClick (e) {
   
   viewB.drawScreen(screens[hoverEntryName.linksTo])
 
-  viewA.addToRotation([0, Math.PI, 0])
-  viewB.addToRotation([0, Math.PI, 0])
+  // viewA.addToRotation([0, Math.PI, 0])
+  // viewB.addToRotation([0, Math.PI, 0])
 
-  viewA.visible = false
-  viewA.interactable = false
-  viewB.visible = true
-  viewB.interactable = true
+  // viewA.visible = false
   
-  let temp = viewB
-  viewB = viewA
-  viewA = temp
+  // let temp = viewB
+  // viewB = viewA
+  // viewA = temp
 
-  return
+  // return
   let hasSwitchedSides = false  
 
-  animate({
-    // duration: 10000,
+  console.log(viewB.mesh.rotation.y)
+
+
+  const oldRotation = container.rotation.clone()
+  const newRotation = new THREE.Vector3(
+    0,
+    oldRotation.y === Math.PI * 0.5 ? 0 : Math.PI * 0.5,
+    0
+  )
+
+  viewB.visible = true
+  viewA.interactable = false
+
+  eventEmitter.emit('transitioning-start')
+
+  popmotion.animate({
+    duration: 1000,
+    ease: popmotion.easeOut,
     onUpdate: v => {
+      eventEmitter.emit('transitioning', v)
+      container.rotation.y = oldRotation.y + (newRotation.y - oldRotation.y) * v
       if (v > 0.5 && !hasSwitchedSides) {
-        viewB.visible = true
-        viewA.visible = false
         hasSwitchedSides = true
       }
-      console.log(v)
-      viewA.addToRotation([0, Math.PI * v, 0])
-      viewB.addToRotation([0, Math.PI * v, 0])
     },
     onComplete: () => {
-      viewA.interactable = false
       viewB.interactable = true
-      let temp = viewB
+      viewA.visible = false
+      const temp = viewB
       viewB = viewA
       viewA = temp
+      eventEmitter.emit('transitioning-end')
     }
   })
   

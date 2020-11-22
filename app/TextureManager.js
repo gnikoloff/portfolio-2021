@@ -171,11 +171,14 @@ export default class TextureManager {
     ctx.font = `${fontSize}px monospace`
 
     const textMetrics = ctx.measureText(entry.value)
-    
+
+    const { textureXOffset } = entry
+    // const cellsOccupied = Math.ceil(textMetrics.width / cellWidth) + Math.ceil(cellWidth * textureXOffset / size)
+
     const cellsOccupied = Math.ceil(textMetrics.width / cellWidth)
 
-    console.log(fontSize)
-    
+    console.log(entry.value, cellsOccupied)
+
     if (atlasIdxX + cellsOccupied > entriesPerRow) {
       atlasIdxX = 0
       atlasIdxY++
@@ -189,7 +192,7 @@ export default class TextureManager {
 
     const texAtlasesForLine = []
     
-    for (let i = atlasIdxX; i < atlasIdxX +cellsOccupied; i++) {
+    for (let i = atlasIdxX; i < atlasIdxX + cellsOccupied; i++) {
       const texAtlasX = i / entriesPerRow
       const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
       texAtlasesForLine.push([texAtlasX, texAtlasY])
@@ -197,7 +200,7 @@ export default class TextureManager {
     }
     atlasIdxX += cellsOccupied
 
-    ctx.translate(drawX, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
+    ctx.translate(drawX + cellWidth * textureXOffset, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
     ctx.fillText(entry.value, 0, 0)
     ctx.restore()
 
