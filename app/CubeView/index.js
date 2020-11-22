@@ -267,7 +267,7 @@ export default class CubeView {
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
           const entry = {
-            value: key[n], type
+            value: key[n], type, fontSize: keyValue[1].fontSize
           }
           // console.log('allocating ENTRY_TYPE_INDIVIDUAL_CHAR texture for ' + key)
           const {
@@ -279,7 +279,7 @@ export default class CubeView {
         }
       } else if (type === ENTRY_TYPE_WORD_LINE) {
         const entry = {
-          value: key, x, y, type
+          value: key, x, y, type, fontSize: keyValue[1].fontSize
         }
         console.log('allocating ENTRY_TYPE_WORD_LINE texture for ' + key)
         const {
@@ -377,7 +377,7 @@ export default class CubeView {
             }
           } else if (type === ENTRY_TYPE_WORD_LINE) {
             const entry = {
-              value: key, x, y, type
+              value: key, x, y, type, fontSize: keyValue[1].fontSize
             }
             const startIdx = x + this._radius * (this._radius - y)
             const {
@@ -423,8 +423,6 @@ export default class CubeView {
           this._mesh.instanceMatrix.needsUpdate = true
         }
       }
-
-      console.log(this._scaleTargets)
 
       this._dummy.matrix.identity()
       

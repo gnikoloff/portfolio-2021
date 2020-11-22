@@ -11,7 +11,8 @@
     "Personal Website": {
       "x": 6,
       "y": 5,
-      "type": "WORD_LINE"
+      "type": "WORD_LINE",
+      "fontSize": 150
     },
     "PROJECTS": {
       "x": 6,
@@ -49,12 +50,14 @@
       "x": 3,
       "y": 4,
       "type": "WORD_LINE",
+      "fontSize": 150,
       "linksTo": "Focus.de"
     },
     "MetaView": {
       "x": 3,
       "y": 6,
       "type": "WORD_LINE",
+      "fontSize": 150,
       "linksTo": "MetaView"
     },
     "WebGL Shop": {
@@ -65,10 +68,17 @@
     }
   },
   "INFO": {
+    "BACK": {
+      "x": 1,
+      "y": 2,
+      "type": "INDIVIDUAL_CHAR",
+      "linksTo": "HOME"
+    },
     "A frontend developer from Berlin": {
-      "x": 2,
-      "y": 14,
+      "x": 1,
+      "y": 5,
       "type": "WORD_LINE",
+      "fontSize": 150,
       "linksTo": "HOME"
     }
   },

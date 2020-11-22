@@ -10,6 +10,8 @@ import {
 
 let instance
 
+const IDEAL_TEXTURE_SIZE = 4096
+
 export default class TextureManager {
   static init ({ size }) {
     if (!instance) {
@@ -40,7 +42,7 @@ export default class TextureManager {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
       // ctx.font = '60px Arial'
       // ctx.fillText(i, drawX + 5, drawY + cellWidth / 2)
-      ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
+      // ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
     }
 
     this._textureSet.set('characters', {
@@ -101,7 +103,8 @@ export default class TextureManager {
       ctx,
       atlas,
       cellWidth,
-      entriesPerRow
+      entriesPerRow,
+      size
     } = textureData
 
     let {
@@ -109,13 +112,17 @@ export default class TextureManager {
       atlasIdxY,
     } = textureData
 
+    const texWidthDelta = size / IDEAL_TEXTURE_SIZE
+    const fontSize = (entry.fontSize || 200) * texWidthDelta
+
     const drawX = atlasIdxX * cellWidth
     const drawY = atlasIdxY * cellWidth
     ctx.save()
     ctx.fillStyle = 'black'
-    ctx.font = `${150}px monospace`
+    ctx.font = `${fontSize}px monospace`
     ctx.textAlign = 'center'
-    ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2 + 85)
+    const textMetrics = ctx.measureText(entry.value)
+    ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
     ctx.fillText(entry.value, 0, 0)
     ctx.restore()
     const texAtlasX = atlasIdxX / entriesPerRow
@@ -140,6 +147,70 @@ export default class TextureManager {
 
     return texAtlasCoords
   }
+  _drawWordLine (entry, textureId) {
+    const textureData = this._textureSet.get(textureId)
+    const {
+      ctx,
+      atlas,
+      cellWidth,
+      entriesPerRow,
+      size
+    } = textureData
+
+    let {
+      atlasIdxX,
+      atlasIdxY,
+    } = textureData
+
+    
+    const texWidthDelta = size / IDEAL_TEXTURE_SIZE
+    const fontSize = entry.fontSize * texWidthDelta
+
+    ctx.save()
+    ctx.fillStyle = 'black'
+    ctx.font = `${fontSize}px monospace`
+
+    const textMetrics = ctx.measureText(entry.value)
+    
+    const cellsOccupied = Math.ceil(textMetrics.width / cellWidth)
+
+    console.log(fontSize)
+    
+    if (atlasIdxX + cellsOccupied > entriesPerRow) {
+      atlasIdxX = 0
+      atlasIdxY++
+    }
+
+    const drawX = atlasIdxX * cellWidth
+    const drawY = atlasIdxY * cellWidth
+
+    ctx.strokeStyle = 'red'
+    ctx.lineWidth = 10
+
+    const texAtlasesForLine = []
+    
+    for (let i = atlasIdxX; i < atlasIdxX +cellsOccupied; i++) {
+      const texAtlasX = i / entriesPerRow
+      const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
+      texAtlasesForLine.push([texAtlasX, texAtlasY])
+      // ctx.strokeRect(x, drawY, cellWidth, cellWidth)
+    }
+    atlasIdxX += cellsOccupied
+
+    ctx.translate(drawX, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
+    ctx.fillText(entry.value, 0, 0)
+    ctx.restore()
+
+    atlas.set(entry.value, texAtlasesForLine)
+
+    this._textureSet.set(textureId, {
+      ...textureData,
+      atlasIdxX,
+      atlasIdxY
+    })
+
+    return texAtlasesForLine
+  }
   _drawDecoration (entry, textureId) {
     const textureData = this._textureSet.get(textureId)
     const {
@@ -147,6 +218,7 @@ export default class TextureManager {
       atlas,
       cellWidth,
       entriesPerRow,
+      size
     } = textureData
 
     let {
@@ -165,7 +237,13 @@ export default class TextureManager {
       ctx.closePath()
       ctx.fill()
     } else if (entry.type === 'CROSS') {
-      const radius = 50
+      const idealRadius = 50
+      const idealLineWidth = 30
+      const texWidthDelta = size / IDEAL_TEXTURE_SIZE
+      const radius = idealRadius * texWidthDelta
+      const lineWidth = idealLineWidth * texWidthDelta
+      ctx.lineWidth = lineWidth
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
       ctx.beginPath()
       ctx.moveTo(-radius, -radius)
       ctx.lineTo(radius, radius)
@@ -197,70 +275,6 @@ export default class TextureManager {
     })
 
     return texAtlasCoords
-  }
-  _drawWordLine (entry, textureId) {
-    const textureData = this._textureSet.get(textureId)
-    const {
-      ctx,
-      atlas,
-      cellWidth,
-      entriesPerRow
-    } = textureData
-
-    let {
-      atlasIdxX,
-      atlasIdxY,
-    } = textureData
-
-    ctx.save()
-    ctx.fillStyle = 'black'
-    ctx.font = `${150}px monospace`
-
-    const textMetrics = ctx.measureText(entry.value)
-    
-    const cellsOccupied = Math.ceil(textMetrics.width / cellWidth)
-    
-    // this._atlasIdX += cellsOccupied
-    // atlasIdxY += 1
-
-
-
-    // atlasIdxX++
-    
-    if (atlasIdxX + cellsOccupied > entriesPerRow) {
-      atlasIdxX = 0
-      atlasIdxY++
-    }
-
-    const drawX = atlasIdxX * cellWidth
-    const drawY = atlasIdxY * cellWidth
-
-    ctx.strokeStyle = 'red'
-    ctx.lineWidth = 10
-
-    const texAtlasesForLine = []
-    
-    for (let i = atlasIdxX; i < atlasIdxX +cellsOccupied; i++) {
-      const texAtlasX = i / entriesPerRow
-      const texAtlasY = 1.0 - (atlasIdxY + 1) / entriesPerRow
-      texAtlasesForLine.push([texAtlasX, texAtlasY])
-      // ctx.strokeRect(x, drawY, cellWidth, cellWidth)
-    }
-    atlasIdxX += cellsOccupied
-
-    ctx.translate(drawX, drawY + cellWidth / 2 + 85)
-    ctx.fillText(entry.value, 0, 0)
-    ctx.restore()
-
-    atlas.set(entry.value, texAtlasesForLine)
-
-    this._textureSet.set(textureId, {
-      ...textureData,
-      atlasIdxX,
-      atlasIdxY
-    })
-
-    return texAtlasesForLine
   }
   _addAtlasEntry (entry, textureId) {
     const { atlas, texture } = this._textureSet.get(textureId)
@@ -334,7 +348,7 @@ export default class TextureManager {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
         // ctx.font = '60px Arial'
         // ctx.fillText(i, drawX + cellWidth / 2, drawY + cellWidth / 2)
-        ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
+        // ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
       }
 
       textureUniformIdx = this._textureSet.size

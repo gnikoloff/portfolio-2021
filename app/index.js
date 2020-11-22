@@ -34,6 +34,7 @@ const raycaster = new THREE.Raycaster()
 const clock = new THREE.Clock()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
+// const maxTextureSize = 512
 const texManager = TextureManager.init({ size: maxTextureSize })
 
 const imageEntries = Object.entries(screens).reduce((acc, keyValue) => {
