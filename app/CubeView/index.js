@@ -17,11 +17,7 @@ import {
   EVT_HOVER_MENU_ITEM,
 } from '../constants'
 
-import { Object3D } from 'three'
-
 const HOVERED_SCALE = 5
-
-console.log(THREE.ShaderChunk)
 
 const createShaderMaterial = ({
   textures,
@@ -76,25 +72,23 @@ export default class CubeView {
     this._interactable = false
     this._transitioning = false
 
-    this._viewOffset = new THREE.Vector3()
     this._viewRotation = new THREE.Quaternion()
+    this._dummy = new THREE.Object3D()
 
-    this._matrix = new THREE.Matrix4()
-    this._dummy = new Object3D()
     this._scales = new Float32Array(this._numBoxes).fill(1)
     this._scaleTargets = new Float32Array(this._numBoxes).fill(1)
     this._transitioningScaleTargets = new Float32Array(this._numBoxes).fill(1)
 
     this._screenData = null
 
-    this._geometry = new THREE.BoxBufferGeometry(1, 1, 1)
-    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0))
+    const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
+    geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5))
 
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     const textureIndices = new Float32Array(this._numBoxes)
 
-    this._geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
-    this._geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
+    geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
+    geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
 
     const letterTextureData = this._textureManager.getTexture('characters')
     const textures = [
@@ -188,22 +182,11 @@ export default class CubeView {
 
     const materials = frontMaterial
 
-    this._mesh = new THREE.InstancedMesh(this._geometry, materials, this._numBoxes)
+    this._mesh = new THREE.InstancedMesh(geometry, materials, this._numBoxes)
     this._mesh.castShadow = true
     this._mesh.receiveShadow = true
     this._mesh.visible = false
-    // this._mesh.position.set(0, 0, -this._radius / 2)
 
-    for (let i = 0; i < this._numBoxes; i++) {
-      const xIdx = i % this._radius
-      const yIdx = (i - xIdx) / this._radius
-      const x = xIdx - this._radius / 2
-      const y = yIdx - this._radius / 2
-      this._dummy.position.set(x, y, 0)
-      this._dummy.scale.set(1, 1, HOVERED_SCALE)
-      this._dummy.updateMatrix()
-      this._mesh.setMatrixAt(i, this._dummy.matrix)
-    }
     this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking })
 
     eventEmitter.on('transitioning', this._onTransition.bind(this))
@@ -236,7 +219,7 @@ export default class CubeView {
   set interactable (interactable) {
     if (!interactable) {
       for (let i = 0; i < this._numBoxes; i++) {
-        // this._mesh.geometry.attributes.scale.array[i] = 1
+        this._scaleTargets[i] = 1
       }
     }
     this._interactable = interactable
@@ -259,7 +242,6 @@ export default class CubeView {
         lookAtVec = new THREE.Vector3(0, -100, 0)
       }
       this._mesh.lookAt(lookAtVec)
-      // this._dummy.rotation.set(Math.random(), Math.random(), Math.PI)
     }
   }
 
@@ -299,7 +281,6 @@ export default class CubeView {
           value: keyValue[1].value, type
         }
         const { width, height } = keyValue[1]
-        // console.log('allocating ENTRY_TYPE_IMAGE texture for ' + key)
         const {
           texCoordinates,
           textureUniformIdx
@@ -317,12 +298,7 @@ export default class CubeView {
             this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[i][0]
             this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[i][1]  
           }
-
-          // if (xIdx > x && xIdx < x + width && yIdx > y && yIdx < y + height) {
-          //   this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
-          //   this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[i][0]
-          //   this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[i][1]
-          // }
+          this._mesh.geometry.attributes.textureIdx.needsUpdate = true
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
@@ -377,22 +353,20 @@ export default class CubeView {
         }
       }
     })
+    this._mesh.geometry.attributes.letterOffset.needsUpdate = true
   }
 
   onUpdateFrame ({
     dt,
     raycaster,
-    mouse,
-    camera
   }) {
-    raycaster.setFromCamera(mouse, camera)
-
     const intersection = raycaster.intersectObject(this._mesh)
 
     let instanceId
 
     if (intersection.length > 0 && this._interactable && !this._transitioning) {
       instanceId = intersection[0] && intersection[0].instanceId
+      
       const instanceXIdx = instanceId % this._radius
       const instanceYIdx = this._radius - (instanceId - instanceXIdx) / this._radius
 
@@ -415,24 +389,13 @@ export default class CubeView {
             return
           }
 
-          // this._matrix.identity()
-
           if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
             if (instanceXIdx >= x && instanceXIdx < x + key.length && instanceYIdx === y) {
               const startIdx = x + this._radius * (this._radius - y)
               for (let n = startIdx; n < startIdx + key.length; n++) {
-                const xIdx = n % this._radius
-                const yIdx = (n - xIdx) / this._radius
-                const x = xIdx - this._radius / 2
-                const y = yIdx - this._radius / 2
-                // this._dummy.position.set(x, y, 0)
-                // this._dummy.scale.set(1, 1, HOVERED_SCALE)
-                // this._dummy.updateMatrix()
-                // this._mesh.setMatrixAt(n, this._dummy.matrix)
                 this._scaleTargets[n] = HOVERED_SCALE
               }
 
-              this._mesh.instanceMatrix.needsUpdate = true
               hoveredItem = { key, linksTo }
             }
           } else if (type === ENTRY_TYPE_WORD_LINE) {
@@ -445,17 +408,8 @@ export default class CubeView {
             } = this._textureManager.getEntryTexCoordinate(entry)
             if (instanceXIdx >= x && instanceXIdx < x + texCoordinates.length && instanceYIdx === y) {
               for (let i = startIdx; i < startIdx + texCoordinates.length; i++) {
-                const xIdx = i % this._radius
-                const yIdx = (i - xIdx) / this._radius
-                const x = xIdx - this._radius / 2
-                const y = yIdx - this._radius / 2
-                // this._dummy.position.set(x, y, 0)
-                // this._dummy.scale.set(1, 1, HOVERED_SCALE)
-                // this._dummy.updateMatrix()
-                // this._mesh.setMatrixAt(i, this._dummy.matrix)
                 this._scaleTargets[i] = HOVERED_SCALE
               }
-              this._mesh.instanceMatrix.needsUpdate = true
               hoveredItem = { key, linksTo }
             }
           }        
@@ -470,17 +424,8 @@ export default class CubeView {
             document.body.classList.remove('hovering')
           }
           for (let i = 0; i < this._numBoxes; i++) {
-            const xIdx = i % this._radius
-            const yIdx = (i - xIdx) / this._radius
-            const x = xIdx - this._radius / 2
-            const y = yIdx - this._radius / 2
-            // this._dummy.position.set(x, y, 0)
-            // this._dummy.scale.set(1, 1, 1)
-            // this._dummy.updateMatrix()
-            // this._mesh.setMatrixAt(i, this._dummy.matrix)
             this._scaleTargets[i] = 1
           }
-          this._mesh.instanceMatrix.needsUpdate = true
         }
       }
       
@@ -494,8 +439,6 @@ export default class CubeView {
       }
     }
 
-    // this._dummy.matrix.identity()
-
     for (let i = 0; i < this._numBoxes; i++) {
       this._scales[i] += (this._scaleTargets[i] - this._scales[i]) * (dt * 20)
       // this._scales[i] = this._scaleTargets[i]
@@ -503,15 +446,13 @@ export default class CubeView {
       const yIdx = (i - xIdx) / this._radius
       const x = xIdx - this._radius / 2
       const y = yIdx - this._radius / 2
-      this._dummy.position.set(x + 1 + this._viewOffset.x, y + this._viewOffset.y, this._radius / 2 + this._viewOffset.z)
+      this._dummy.position.set(x, y, this._radius / 2)
       this._dummy.rotation.setFromQuaternion(this._viewRotation)
       this._dummy.scale.set(1, 1, this._scales[i])
       this._dummy.updateMatrix()
       this._mesh.setMatrixAt(i, this._dummy.matrix)
     }
     this._mesh.instanceMatrix.needsUpdate = true
-
-    this._mesh.geometry.attributes.textureIdx.needsUpdate = true
-    this._mesh.geometry.attributes.letterOffset.needsUpdate = true
+    
   }
 }
