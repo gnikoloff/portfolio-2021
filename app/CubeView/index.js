@@ -19,7 +19,7 @@ import {
 
 import { Object3D } from 'three'
 
-const HOVERED_SCALE = 1.1
+const HOVERED_SCALE = 5
 
 console.log(THREE.ShaderChunk)
 
@@ -67,9 +67,7 @@ const createShaderMaterial = ({
 export default class CubeView {
   constructor ({
     radius,
-    lightPosition,
-    imageEntries,
-    rotation = [0, 0, 0]
+    imageEntries
   }) {
     this._textureManager = TextureManager.getInstance()
     this._imageEntries = imageEntries
@@ -77,6 +75,9 @@ export default class CubeView {
     this._numBoxes = radius * radius
     this._interactable = false
     this._transitioning = false
+
+    this._viewOffset = new THREE.Vector3()
+    this._viewRotation = new THREE.Quaternion()
 
     this._matrix = new THREE.Matrix4()
     this._dummy = new Object3D()
@@ -87,7 +88,7 @@ export default class CubeView {
     this._screenData = null
 
     this._geometry = new THREE.BoxBufferGeometry(1, 1, 1)
-    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0.5, 0, this._radius / 2))
+    this._geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0))
 
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     const textureIndices = new Float32Array(this._numBoxes)
@@ -176,19 +177,18 @@ export default class CubeView {
       }
     })
 
-    const materials = [
-      sideMaterial,
-      sideMaterial,
-      sideMaterial,
-      sideMaterial,
-      frontMaterial,
-      sideMaterial,
-    ]
+    // const materials = [
+    //   sideMaterial,
+    //   sideMaterial,
+    //   sideMaterial,
+    //   sideMaterial,
+    //   frontMaterial,
+    //   sideMaterial,
+    // ]
 
-    // const materials = this._frontMaterial
+    const materials = frontMaterial
 
     this._mesh = new THREE.InstancedMesh(this._geometry, materials, this._numBoxes)
-    this._mesh.rotation.set(...rotation)
     this._mesh.castShadow = true
     this._mesh.receiveShadow = true
     this._mesh.visible = false
@@ -242,10 +242,24 @@ export default class CubeView {
     this._interactable = interactable
   }
 
-  _onTransitionStart () {
+  _onTransitionStart (direction) {
     this._transitioning = true
     for (let i = 0; i < this._transitioningScaleTargets.length; i++) {
-      this._transitioningScaleTargets[i] = Math.random() * 5 - 2.5
+      this._transitioningScaleTargets[i] = Math.random() * 10 + 2
+    }
+    if (!this._mesh.visible) {
+      let lookAtVec
+      if (direction === 0) {
+        lookAtVec = new THREE.Vector3(100, 0, 0)
+      } else if (direction === 1) {
+        lookAtVec = new THREE.Vector3(-100, 0, 0)
+      } else if (direction === 2) {
+        lookAtVec = new THREE.Vector3(0, 100, 0)
+      } else if (direction === 3) {
+        lookAtVec = new THREE.Vector3(0, -100, 0)
+      }
+      this._mesh.lookAt(lookAtVec)
+      // this._dummy.rotation.set(Math.random(), Math.random(), Math.PI)
     }
   }
 
@@ -480,7 +494,7 @@ export default class CubeView {
       }
     }
 
-    this._dummy.matrix.identity()
+    // this._dummy.matrix.identity()
 
     for (let i = 0; i < this._numBoxes; i++) {
       this._scales[i] += (this._scaleTargets[i] - this._scales[i]) * (dt * 20)
@@ -489,7 +503,8 @@ export default class CubeView {
       const yIdx = (i - xIdx) / this._radius
       const x = xIdx - this._radius / 2
       const y = yIdx - this._radius / 2
-      this._dummy.position.set(x, y, 0)
+      this._dummy.position.set(x + 1 + this._viewOffset.x, y + this._viewOffset.y, this._radius / 2 + this._viewOffset.z)
+      this._dummy.rotation.setFromQuaternion(this._viewRotation)
       this._dummy.scale.set(1, 1, this._scales[i])
       this._dummy.updateMatrix()
       this._mesh.setMatrixAt(i, this._dummy.matrix)

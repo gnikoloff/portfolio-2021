@@ -53,7 +53,7 @@ imageEntries.forEach(entry => texManager.getEntryTexCoordinate(entry, entry.valu
 const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light2 );
 var light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(8, 1000, 400)
+light.position.set(100, 300, 600)
 light.castShadow = true; // default false
 light.shadow.mapSize.width = maxTextureSize;
 light.shadow.mapSize.height = maxTextureSize;
@@ -62,8 +62,7 @@ light.shadow.camera.right = 20;
 light.shadow.camera.top = 20;
 light.shadow.camera.bottom = -20;
 light.shadow.camera.near = 0.5;
-light.shadow.camera.far = 2000
-
+light.shadow.camera.far = 4000
 
 var helper = new THREE.DirectionalLightHelper(light)
 scene.add(helper);
@@ -96,10 +95,8 @@ viewA.name = 'view a'
 let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position,
-  rotation: [0, -Math.PI / 2, 0],
   imageEntries
 })
-viewB.visible = true
 viewB.name = 'view b'
 
 container.add(viewA.mesh)
@@ -143,29 +140,45 @@ function onMouseClick (e) {
   // viewA = temp
 
   // return
-  let hasSwitchedSides = false  
+  let hasSwitchedSides = false
 
-  console.log(viewB.mesh.rotation.y)
+  const direction = Math.floor(Math.random() * 4)
+  // const direction = 3
 
 
   const oldRotation = container.rotation.clone()
-  const newRotation = new THREE.Vector3(
-    0,
-    oldRotation.y === Math.PI * 0.5 ? 0 : Math.PI * 0.5,
-    0
-  )
+  const newRotation = new THREE.Vector3()
 
-  viewB.visible = true
+  if (direction === 0) {
+    newRotation.y -= Math.PI / 2
+  } else if (direction === 1) {
+    newRotation.y += Math.PI / 2
+  } else if (direction === 2) {
+    newRotation.x += Math.PI / 2
+  } else if (direction === 3) {
+    newRotation.x -= Math.PI / 2
+  }
+
+
+  // const newRotation = new THREE.Vector3(
+  //   oldRotation.x === Math.PI * 0.5 ? 0 : Math.PI * 0.5,
+  //   oldRotation.y === Math.PI * 0.5 ? 0 : Math.PI * 0.5,
+  //   0
+  // )
+
   viewA.interactable = false
 
-  eventEmitter.emit('transitioning-start')
-
+  eventEmitter.emit('transitioning-start', direction)
+  viewB.visible = true
+// return
   popmotion.animate({
     duration: 1000,
     ease: popmotion.easeOut,
     onUpdate: v => {
       eventEmitter.emit('transitioning', v)
+      container.rotation.x = oldRotation.x + (newRotation.x - oldRotation.x) * v
       container.rotation.y = oldRotation.y + (newRotation.y - oldRotation.y) * v
+      container.rotation.z = oldRotation.z + (newRotation.z - oldRotation.z) * v
       if (v > 0.5 && !hasSwitchedSides) {
         hasSwitchedSides = true
       }
