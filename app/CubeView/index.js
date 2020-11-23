@@ -20,53 +20,172 @@ import {
 const HOVERED_SCALE = 5
 
 const createShaderMaterial = ({
-  textures,
-  textureSize,
-  vertexShaderSnippets = {},
-  fragmentShaderSnippets = {}
+  uniforms,
+  entriesPerRow,
 } = {}) => {
-  const wVertex = THREE.ShaderLib.lambert.vertexShader
-  const wFragment = THREE.ShaderLib.lambert.fragmentShader
-  const wUniforms = THREE.ShaderLib.lambert.uniforms
-  const material = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.merge([
-      wUniforms,
-      textures
-        ? {
-          textureSize: { value: textureSize },
-          textures: {
-            type: 'tv',
-            value: textures
-          }
-        }
-        : {}
-    ]),
-    lights: true,
-    vertexShader: wVertex,
-    fragmentShader: wFragment
+
+  const material = new THREE.MeshStandardMaterial({
+    metalness: 0.8,
+    roughness: 0.7,
+    bumpScale: 0.02
   })
+
   material.onBeforeCompile = shader => {
-    Object.entries(vertexShaderSnippets).forEach(keyValue => {
-      const key = keyValue[0]
-      const value = keyValue[1]
-      shader.vertexShader = shader.vertexShader.replace(key, value)
-    })
-    Object.entries(fragmentShaderSnippets).forEach(keyValue => {
-      const key = keyValue[0]
-      const value = keyValue[1]
-      shader.fragmentShader = shader.fragmentShader.replace(key, value)
-    })
+    shader.uniforms = {
+      ...uniforms,
+      ...shader.uniforms
+    }
+    shader.vertexShader = shader.vertexShader.replace('void main() {', `
+      // uniform mat3 uvTransform;
+
+      attribute float textureIdx;
+      attribute vec2 textureUVOffset;
+      attribute vec2 textureAtlasOffset;
+
+      varying float vTextureIdx;
+      // varying vec2 vUv;
+      varying vec2 vTextureUVOffset;
+      varying vec2 vTextureAtlasOffset;
+
+      void main () {
+        vTextureIdx = textureIdx;
+        // vUv = (uvTransform * vec3( uv, 1 )).xy;
+        vTextureUVOffset = textureUVOffset;
+        vTextureAtlasOffset = textureAtlasOffset;
+    `)
+    shader.fragmentShader = shader.fragmentShader.replace('void main() {', `
+
+      void main (){
+    `)
+    shader.fragmentShader = shader.fragmentShader.replace('#include <bumpmap_pars_fragment>', `
+      uniform sampler2D textures[4];
+
+      varying float vTextureIdx;
+      // varying vec2 vUv;
+      varying vec2 vTextureUVOffset;
+      varying vec2 vTextureAtlasOffset;
+      #ifdef USE_BUMPMAP
+        uniform sampler2D bumpMap;
+        uniform float bumpScale;
+        vec2 dHdxy_fwd() {
+          vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
+          vec2 dSTdx = dFdx( transformedUV );
+          vec2 dSTdy = dFdy( transformedUV );
+          float Hll = bumpScale * texture2D( bumpMap, transformedUV ).x;
+          float dBx = bumpScale * texture2D( bumpMap, transformedUV + dSTdx ).x - Hll;
+          float dBy = bumpScale * texture2D( bumpMap, transformedUV + dSTdy ).x - Hll;
+          return vec2( dBx, dBy );
+        }
+        vec3 perturbNormalArb( vec3 surf_pos, vec3 surf_norm, vec2 dHdxy ) {
+          vec3 vSigmaX = vec3( dFdx( surf_pos.x ), dFdx( surf_pos.y ), dFdx( surf_pos.z ) );
+          vec3 vSigmaY = vec3( dFdy( surf_pos.x ), dFdy( surf_pos.y ), dFdy( surf_pos.z ) );
+          vec3 vN = surf_norm;
+          vec3 R1 = cross( vSigmaY, vN );
+          vec3 R2 = cross( vN, vSigmaX );
+          float fDet = dot( vSigmaX, R1 );
+          fDet *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
+          vec3 vGrad = sign( fDet ) * ( dHdxy.x * R1 + dHdxy.y * R2 );
+          return normalize( abs( fDet ) * surf_norm - vGrad );
+        }
+      #endif
+    `)
+    shader.fragmentShader = shader.fragmentShader.replace(`#include <color_fragment>`, `
+      vec4 texelColor = vec4(0.0);
+      vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
+      if (vTextureIdx < 1.0) {
+        texelColor = texture2D(textures[0], transformedUV);
+      } else if (vTextureIdx < 2.0) {
+        texelColor = texture2D(textures[1], transformedUV);
+      } else if (vTextureIdx < 3.0) {
+        texelColor = texture2D(textures[2], transformedUV);
+      } else if (vTextureIdx < 4.0) {
+        texelColor = texture2D(textures[3], transformedUV);
+      }
+
+      // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
+      // diffuseColor.rgb *= texture2D(texture, vUv);
+      diffuseColor.rgb *= vColor;
+
+      vec4 typeColor = vec4(vec3(0.2), 1.0);
+
+      diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
+    `)
   }
+
   return material
+
+  // const wVertex = THREE.ShaderLib.lambert.vertexShader
+  // const wFragment = THREE.ShaderLib.lambert.fragmentShader
+  // const wUniforms = THREE.ShaderLib.lambert.uniforms
+  // const material = new THREE.ShaderMaterial({
+  //   uniforms: THREE.UniformsUtils.merge([
+  //     wUniforms,
+  //     uniforms
+  //   ]),
+  //   lights: true,
+  //   vertexShader: wVertex,
+  //   fragmentShader: wFragment
+  // })
+  // material.onBeforeCompile = shader => {
+  //   Object.entries(vertexShaderSnippets).forEach(keyValue => {
+  //     const key = keyValue[0]
+  //     const value = keyValue[1]
+  //     shader.vertexShader = shader.vertexShader.replace(key, value)
+  //   })
+  //   Object.entries(fragmentShaderSnippets).forEach(keyValue => {
+  //     const key = keyValue[0]
+  //     const value = keyValue[1]
+  //     shader.fragmentShader = shader.fragmentShader.replace(key, value)
+  //   })
+  // }
+  // return material
 }
+
+// const createShaderMaterial = ({
+//   uniforms,
+//   vertexShaderSnippets = {},
+//   fragmentShaderSnippets = {}
+// } = {}) => {
+
+//   const material = new THREE.MeshStandardMaterial({
+//     metalness: 0.5,
+//     roughness: 0.3,
+//   })
+
+//   return material
+
+//   // const wVertex = THREE.ShaderLib.lambert.vertexShader
+//   // const wFragment = THREE.ShaderLib.lambert.fragmentShader
+//   // const wUniforms = THREE.ShaderLib.lambert.uniforms
+//   // const material = new THREE.ShaderMaterial({
+//   //   uniforms: THREE.UniformsUtils.merge([
+//   //     wUniforms,
+//   //     uniforms
+//   //   ]),
+//   //   lights: true,
+//   //   vertexShader: wVertex,
+//   //   fragmentShader: wFragment
+//   // })
+//   // material.onBeforeCompile = shader => {
+//   //   Object.entries(vertexShaderSnippets).forEach(keyValue => {
+//   //     const key = keyValue[0]
+//   //     const value = keyValue[1]
+//   //     shader.vertexShader = shader.vertexShader.replace(key, value)
+//   //   })
+//   //   Object.entries(fragmentShaderSnippets).forEach(keyValue => {
+//   //     const key = keyValue[0]
+//   //     const value = keyValue[1]
+//   //     shader.fragmentShader = shader.fragmentShader.replace(key, value)
+//   //   })
+//   // }
+//   // return material
+// }
 
 export default class CubeView {
   constructor ({
     radius,
-    imageEntries
   }) {
     this._textureManager = TextureManager.getInstance()
-    this._imageEntries = imageEntries
     this._radius = radius
     this._numBoxes = radius * radius
     this._interactable = false
@@ -84,92 +203,34 @@ export default class CubeView {
     const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
     geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5))
 
+    const { entriesPerRow, texture: charactersAtlasTexture } = this._textureManager.getTexture('characters')
+    const textureSize = new THREE.Vector2(entriesPerRow, entriesPerRow)
+
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     const textureIndices = new Float32Array(this._numBoxes)
+    const textureUvOffsets = new Float32Array(this._numBoxes * 2)
 
-    geometry.setAttribute('letterOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
+    for (let i = 0; i < this._numBoxes; i++) {
+      const x = i % entriesPerRow / this._radius
+      const y = (i - x) / entriesPerRow / this._radius
+      textureUvOffsets[i * 2] = x
+      textureUvOffsets[i * 2 + 1] = y
+    }
+
+    geometry.setAttribute('textureAtlasOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
     geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
+    geometry.setAttribute('textureUVOffset', new THREE.InstancedBufferAttribute(textureUvOffsets, 2))
 
-    const letterTextureData = this._textureManager.getTexture('characters')
-    const textures = [
-      letterTextureData.texture,
-      ...imageEntries.map(entry => this._textureManager.getTexture(entry.value).texture)
-    ]
-
-    const textureSize = new THREE.Vector2(letterTextureData.entriesPerRow, letterTextureData.entriesPerRow)
+    const frontMaterialUniforms = {
+      textures: { value: [charactersAtlasTexture], type: 'tv' }
+    }
 
     const frontMaterial = createShaderMaterial({
-      textures,
-      textureSize,
-      vertexShaderSnippets: {
-        'varying vec3 vLightFront;': `
-          attribute vec2 letterOffset;
-          attribute float textureIdx;
-          uniform mat3 uvTransform;
-          varying vec2 vUv;
-          varying vec3 vLightFront;
-          varying vec2 vLetterOffset;
-          varying float vTextureIdx;
-        `,
-        '#include <uv_vertex>': `
-          vUv = ( uvTransform * vec3( uv, 1 ) ).xy;
-          vLetterOffset = letterOffset;
-          vTextureIdx = textureIdx;
-        `
-      },
-      fragmentShaderSnippets: {
-        'uniform vec3 diffuse;': `
-          uniform vec3 diffuse;
-          uniform sampler2D textures[${textures.length}];
-          uniform vec2 textureSize;
-          varying vec2 vLetterOffset;
-          varying vec2 vUv;
-          varying float vTextureIdx;
-        `,
-        '#include <map_fragment>': `
-          // vec4 texelColor = vec4(0.0);
-          vec2 transformedUV = vUv * vec2(1.0 / textureSize) + vLetterOffset;
-          // if (vTextureIdx < 1.0) {
-          //   texelColor = texture2D(textures[0], transformedUV);
-          // } else if (vTextureIdx < 2.0) {
-          //   texelColor = texture2D(textures[1], transformedUV);
-          // } else if (vTextureIdx < 3.0) {
-          //   texelColor = texture2D(textures[2], transformedUV);
-          // } else if (vTextureIdx < 4.0) {
-          //   texelColor = texture2D(textures[3], transformedUV);
-          // }
-
-          vec4 texelColor = texture2D(textures[0], transformedUV);
-  
-          float borderWidth = 0.05;
-          float aspect = 1.0;
-
-          float maxX = 1.0 - borderWidth;
-          float minX = borderWidth;
-          float maxY = maxX / aspect;
-          float minY = minX / aspect;
-
-          vec4 baseColor; 
-          if (vUv.x < maxX && vUv.x > minX && vUv.y < maxY && vUv.y > minY) {
-            baseColor = vec4(0.5, 0.5, 0.5, 1.0);
-          } else {
-            baseColor = vec4(1.0, 0.5, 0.5, 1.0);
-          }
-          // vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
-
-          diffuseColor = mix(baseColor, texelColor, texelColor.a);
-        `
-      }
+      uniforms: frontMaterialUniforms,
+      entriesPerRow: 20,
     })
-
-    const sideMaterial = createShaderMaterial({
-      fragmentShaderSnippets: {
-        '#include <map_fragment>': `
-          vec4 baseColor = vec4(0.5, 0.5, 0.5, 1.0);
-          diffuseColor = baseColor;
-        `
-      }
-    })
+    frontMaterial.bumpMap = charactersAtlasTexture
+    frontMaterial.needsUpdate = true
 
     // const materials = [
     //   sideMaterial,
@@ -179,6 +240,7 @@ export default class CubeView {
     //   frontMaterial,
     //   sideMaterial,
     // ]
+    
 
     const materials = frontMaterial
 
@@ -186,9 +248,13 @@ export default class CubeView {
     this._mesh.castShadow = true
     this._mesh.receiveShadow = true
     this._mesh.visible = false
+    this._mesh.customFrontFaceUniforms = frontMaterialUniforms
 
-    this._mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking })
+    for (let i = 0; i < this._numBoxes; i++) {
+      this._mesh.setColorAt(i, new THREE.Color(0xaaaaaa).setScalar(0.7 + Math.random() * 0.2))
+    }
 
+    eventEmitter.on('loaded-textures', this._onLoadedTextures.bind(this))
     eventEmitter.on('transitioning', this._onTransition.bind(this))
     eventEmitter.on('transitioning-start', this._onTransitionStart.bind(this))
     eventEmitter.on('transitioning-end', this._onTransitionEnd.bind(this))
@@ -198,21 +264,22 @@ export default class CubeView {
   }
 
   set visible (visible) {
-    // if (!visible) {
-    //   const {
-    //     texCoordinates
-    //   } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
-    //   for (let i = 0; i < this._numBoxes; i++) {
-    //     this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
-    //     this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
-    //     this._mesh.geometry.attributes.textureIdx.array[i] = 0
-    //   }
-    // } else {
-    //   this._mesh.material[4].uniforms.textures.value = [
-    //     this._textureManager.getTexture('characters').texture,
-    //     ...this._imageEntries.map(entry => this._textureManager.getTexture(entry.value).texture)
-    //   ]
-    // }
+    if (!visible) {
+      const {
+        texCoordinates
+      } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
+      for (let i = 0; i < this._numBoxes; i++) {
+        this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+        this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        this._mesh.geometry.attributes.textureIdx.array[i] = 0
+      }
+    }
+
+    if (visible) {
+      this._mesh.customFrontFaceUniforms.textures.value[0] = this._textureManager.getTexture('characters').texture
+      this._mesh.customFrontFaceUniforms.textures.needsUpdate = true
+    }
+
     this._mesh.visible = visible
   }
 
@@ -223,6 +290,16 @@ export default class CubeView {
       }
     }
     this._interactable = interactable
+  }
+
+  _onLoadedTextures (imageEntries) {
+    // this._imageEntries = imageEntries
+    // console.log(this._mesh.material.uniforms.textures)
+    // this._mesh.material.uniforms.textures.value = [
+    //   this._textureManager.getTexture('characters').texture,
+    //   ...imageEntries.map(entry => this._textureManager.getTexture(entry.src).texture)
+    // ]
+    // this._mesh.material.uniforms.textures.needsUpdate = true
   }
 
   _onTransitionStart (direction) {
@@ -274,14 +351,12 @@ export default class CubeView {
       const { x, y, type } = keyValue[1]
       const startIdx = x + this._radius * (this._radius - y)
       if (type === ENTRY_TYPE_IMAGE) {
-        const entry = {
-          value: keyValue[1].value, type
-        }
         const { width, height } = keyValue[1]
         const {
           texCoordinates,
           textureUniformIdx
-        } = this._textureManager.getEntryTexCoordinate(entry, entry.value)
+        } = this._textureManager.getEntryTexCoordinate({ value: keyValue[1].src }, keyValue[1].src)
+
         for (let i = 0; i < this._numBoxes; i++) {
           const xIdx = i % this._radius
           const yIdx = (i - xIdx) / this._radius
@@ -292,8 +367,8 @@ export default class CubeView {
 
           if (xIdx >= startX && xIdx <= endX && yIdx > startY && yIdx < endY) {
             this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
-            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[i][0]
-            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[i][1]  
+            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[i][0]
+            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[i][1]  
           }
           this._mesh.geometry.attributes.textureIdx.needsUpdate = true
         }
@@ -306,8 +381,8 @@ export default class CubeView {
           const {
             texCoordinates
           } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
           n++
         }
       } else if (type === ENTRY_TYPE_WORD_LINE) {
@@ -320,8 +395,8 @@ export default class CubeView {
         } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
         console.log(texCoordinates)
         for (let i = startIdx, n = 0; i < startIdx + texCoordinates.length; i++) {
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[n][0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[n][1]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[n][0]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[n][1]
           n++
         }
       } else if (key === DECORATION_TYPE_BORDER) {
@@ -333,11 +408,11 @@ export default class CubeView {
           const xIdx = i % this._radius
           const yIdx = (i - xIdx) / this._radius
           if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
-            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
-            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
+            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
           } else if (i > 20 && i < 120) {
-            this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
-            this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
+            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
           }
         }
       } else {
@@ -345,12 +420,12 @@ export default class CubeView {
           texCoordinates
         } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
         for (let i = 0; i < this._numBoxes; i++) {
-          this._mesh.geometry.attributes.letterOffset.array[i * 2] = texCoordinates[0]
-          this._mesh.geometry.attributes.letterOffset.array[i * 2 + 1] = texCoordinates[1]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         }
       }
     })
-    this._mesh.geometry.attributes.letterOffset.needsUpdate = true
+    this._mesh.geometry.attributes.textureAtlasOffset.needsUpdate = true
   }
 
   onUpdateFrame ({
@@ -363,7 +438,7 @@ export default class CubeView {
 
     if (intersection.length > 0 && this._interactable && !this._transitioning) {
       instanceId = intersection[0] && intersection[0].instanceId
-      
+      // console.log(instancId)
       const instanceXIdx = instanceId % this._radius
       const instanceYIdx = this._radius - (instanceId - instanceXIdx) / this._radius
 
