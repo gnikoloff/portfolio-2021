@@ -1,8 +1,5 @@
 {
   "HOME": {
-    "BORDER_DECORATION": {
-      "type": "CROSS"
-    },
     "GEORGI NIKOLOV": {
       "x": 3,
       "y": 3,
@@ -33,11 +30,11 @@
       "type": "INDIVIDUAL_CHAR",
       "linksTo": "SOCIAL"
     },
-    "GET IN TOUCH": {
-      "x": 4,
-      "y": 17,
+    "ARCHIVES": {
+      "x": 6,
+      "y": 14,
       "type": "INDIVIDUAL_CHAR",
-      "linksTo": "mailto:nikoloffgeorgi@gmail.com"
+      "linksTo": "SOCIAL"
     }
   },
   "PROJECTS": {
@@ -48,7 +45,7 @@
       "linksTo": "HOME"
     },
     "Focus.de": {
-      "x": 3,
+      "x": 1,
       "y": 4,
       "type": "WORD_LINE",
       "textureXOffset": 0.3,
@@ -56,7 +53,7 @@
       "linksTo": "Focus.de"
     },
     "MetaView": {
-      "x": 3,
+      "x": 1,
       "y": 6,
       "type": "WORD_LINE",
       "textureXOffset": 0.3,
@@ -64,12 +61,15 @@
       "linksTo": "MetaView"
     },
     "WebGL Shop": {
-      "x": 3,
+      "x": 1,
       "y": 8,
       "type": "WORD_LINE",
       "textureXOffset": 0.3,
       "fontSize": 150,
       "linksTo": "WebGL Shop"
+    },
+    "BORDER_DEFINITION": {
+      "indices": [399, 398, 397, 396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380]
     }
   },
   "INFO": {
@@ -114,7 +114,7 @@
       "y": 7,
       "width": 17,
       "height": 10,
-      "value": "/assets/biest.png",
+      "src": "/assets/py.png",
       "type": "IMAGE"
     }
   },
@@ -130,7 +130,7 @@
       "y": 7,
       "width": 17,
       "height": 10,
-      "value": "/assets/displacementmap.jpg",
+      "src": "/assets/nx.png",
       "type": "IMAGE"
     }
   },
@@ -146,7 +146,7 @@
       "y": 7,
       "width": 17,
       "height": 10,
-      "value": "/assets/displacementmap2.jpg",
+      "src": "/assets/metal.jpg",
       "type": "IMAGE"
     }
   }

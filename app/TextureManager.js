@@ -5,7 +5,6 @@ import {
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
   ENTRY_TYPE_SYMBOL_DOT,
-  DECORATION_TYPE_BORDER,
 } from './constants'
 
 let instance
@@ -60,6 +59,8 @@ export default class TextureManager {
       textureUniformIdx: this._textureSet.size
     })
 
+    // this.addAtlasEntry({ type: ENTRY_TYPE_SYMBOL_DOT }, 'characters')
+    // this.addAtlasEntry({ type: 'CROSS' }, 'characters')
   }
   get entriesPerRow () {
     return entriesPerRow
@@ -170,8 +171,6 @@ export default class TextureManager {
 
     const cellsOccupied = Math.ceil(textMetrics.width / cellWidth)
 
-    console.log(entry.value, cellsOccupied)
-
     if (atlasIdxX + cellsOccupied > entriesPerRow) {
       atlasIdxX = 0
       atlasIdxY++
@@ -194,6 +193,7 @@ export default class TextureManager {
     atlasIdxX += cellsOccupied
 
     ctx.translate(drawX + cellWidth * textureXOffset, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
+    
     ctx.fillText(entry.value, 0, 0)
     ctx.restore()
 
@@ -225,7 +225,8 @@ export default class TextureManager {
     const drawX = atlasIdxX * cellWidth
     const drawY = atlasIdxY * cellWidth
     ctx.save()
-    // ctx.fillStyle = 'white'
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
     ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2)
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT) {
       ctx.beginPath()
@@ -239,7 +240,6 @@ export default class TextureManager {
       const radius = idealRadius * texWidthDelta
       const lineWidth = idealLineWidth * texWidthDelta
       ctx.lineWidth = lineWidth
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
       ctx.beginPath()
       ctx.moveTo(-radius, -radius)
       ctx.lineTo(radius, radius)
@@ -258,6 +258,8 @@ export default class TextureManager {
     atlas.set(entry.type, texAtlasCoords)
 
     atlasIdxX++
+
+    console.log('atlasIdxX', atlasIdxX)
 
     if (atlasIdxX >= entriesPerRow) {
       atlasIdxX = 0
@@ -280,14 +282,14 @@ export default class TextureManager {
     }
     if (entry.type === ENTRY_TYPE_IMAGE) {
       texAtlasCoords = this._drawImage(entry, textureId)
-    } else if (entry.type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
+    } else if (entry.type === ENTRY_TYPE_INDIVIDUAL_CHAR || entry === ' ') {
       texAtlasCoords = this._drawChar(entry, textureId)
     } else if (entry.type === ENTRY_TYPE_WORD_LINE) {
       texAtlasCoords = this._drawWordLine(entry, textureId)
     } else {
       texAtlasCoords = this._drawDecoration(entry, textureId)
     }
-    console.log('%c mark texture as needs update', 'background: yellow;color:black;')
+    // console.log('%c mark texture as needs update', 'background: yellow;color:black;')
     texture.needsUpdate = true
     return texAtlasCoords
   }
@@ -331,6 +333,7 @@ export default class TextureManager {
     console.log('allocated new texture with id', textureId)
   }
   getEntryTexCoordinate (entry, textureId = 'characters') {
+    // console.log(entry.value)
     const textureData = this._textureSet.get(textureId)
 
     let textureUniformIdx
@@ -340,7 +343,7 @@ export default class TextureManager {
     if (textureData) {
       textureUniformIdx = textureData.textureUniformIdx
       atlas = textureData.atlas
-      texCoordinates = atlas.get(entry.value)
+      texCoordinates = atlas.get(entry.value || entry.type)
     } else {
       // throw new Error('Texture data not found for this ID')
     }

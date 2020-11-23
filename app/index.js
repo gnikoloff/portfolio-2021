@@ -105,7 +105,7 @@ let viewA = new CubeView({
 })
 viewA.interactable = true
 viewA.visible = true
-viewA.drawScreen(screens['HOME'])
+viewA.drawScreen(VIEW_HOME, screens[VIEW_HOME])
 viewA.name = 'view a'
 
 let viewB = new CubeView({
@@ -143,7 +143,7 @@ function onMouseClick (e) {
 
   document.title = `${hoverEntryName.linksTo.substring(0, 1)}${hoverEntryName.linksTo.substring(1).toLowerCase()} - Georgi Nikolov`
   
-  viewB.drawScreen(screens[hoverEntryName.linksTo])
+  viewB.drawScreen(hoverEntryName.linksTo, screens[hoverEntryName.linksTo])
 
   // viewA.addToRotation([0, Math.PI, 0])
   // viewB.addToRotation([0, Math.PI, 0])

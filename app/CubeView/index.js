@@ -12,9 +12,8 @@ import {
   ENTRY_TYPE_IMAGE,
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
+  VIEW_HOME,
   ENTRY_TYPE_SYMBOL_DOT,
-  DECORATION_TYPE_BORDER,
-  EVT_HOVER_MENU_ITEM,
 } from '../constants'
 
 const HOVERED_SCALE = 5
@@ -267,7 +266,7 @@ export default class CubeView {
     if (!visible) {
       const {
         texCoordinates
-      } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
+      } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, 'characters')
       for (let i = 0; i < this._numBoxes; i++) {
         this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
         this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
@@ -341,7 +340,7 @@ export default class CubeView {
     }
   }
   
-  drawScreen (screenData) {
+  drawScreen (viewName, screenData) {
     if (!screenData) {
       throw new Error('Provided no view screenData')
     }
@@ -350,6 +349,11 @@ export default class CubeView {
       const key = keyValue[0]
       const { x, y, type } = keyValue[1]
       const startIdx = x + this._radius * (this._radius - y)
+
+      if (key === 'BORDER_DEFINITION') {
+        return
+      }
+
       if (type === ENTRY_TYPE_IMAGE) {
         const { width, height } = keyValue[1]
         const {
@@ -389,42 +393,60 @@ export default class CubeView {
         const entry = {
           value: key, x, y, type, textureXOffset: keyValue[1].textureXOffset, fontSize: keyValue[1].fontSize
         }
-        console.log('allocating ENTRY_TYPE_WORD_LINE texture for ' + key)
         const {
           texCoordinates
         } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
-        console.log(texCoordinates)
+        // console.log(texCoordinates)
         for (let i = startIdx, n = 0; i < startIdx + texCoordinates.length; i++) {
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[n][0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[n][1]
           n++
         }
-      } else if (key === DECORATION_TYPE_BORDER) {
-        const entry = { type }
-        const {
-          texCoordinates
-        } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
-        for (let i = 0; i < this._numBoxes; i++) {
-          const xIdx = i % this._radius
-          const yIdx = (i - xIdx) / this._radius
-          if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
-            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
-            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
-          } else if (i > 20 && i < 120) {
-            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
-            this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
-          }
-        }
       } else {
+        console.log(key)
         const {
           texCoordinates
-        } = this._textureManager.getEntryTexCoordinate(' ', 'characters')
+        } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, 'characters')
         for (let i = 0; i < this._numBoxes; i++) {
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         }
       }
     })
+
+    for (let i = 0; i < this._numBoxes; i++) {
+      const entry = {
+        type: Math.random() > 0.7 ? ENTRY_TYPE_SYMBOL_DOT : 'CROSS'
+      }
+      const {
+        texCoordinates
+      } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+      const xIdx = i % this._radius
+      const yIdx = (i - xIdx) / this._radius
+      if (viewName === VIEW_HOME) {
+        if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        } else if (i > 20 && i < 80) {
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        }
+      } else if (viewName === 'PROJECTS') {
+        const hasDecoration = screenData['BORDER_DEFINITION'].indices.some(indice => indice === i)
+        if (hasDecoration) {
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        }
+        
+        // if (xIdx % 2 === 0 && yIdx % 2 !== 0 ) {
+        //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+        //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        // } else {
+
+        // }
+      }
+    }
+
     this._mesh.geometry.attributes.textureAtlasOffset.needsUpdate = true
   }
 
@@ -452,10 +474,6 @@ export default class CubeView {
           const key = keyValue[0]
           const { x, y, type, linksTo } = keyValue[1]
 
-
-          if (key === DECORATION_TYPE_BORDER) {
-            return
-          }
 
           if (!linksTo) {
             return
