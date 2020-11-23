@@ -8,6 +8,10 @@ const OrbitControls = OrbitControlsA(THREE)
 
 import store from './store'
 
+import {
+  loadImage
+} from './helpers'
+
 import TextureManager from './TextureManager'
 import ExtendMaterial from './ExtendMaterial'
 import CubeView from './CubeView'
@@ -35,37 +39,50 @@ const clock = new THREE.Clock()
 const container = new THREE.Object3D()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
-// const maxTextureSize = 256
+// const maxTextureSize = 1024
 const texManager = TextureManager.init({ size: maxTextureSize })
 
 const imageEntries = Object.entries(screens).reduce((acc, keyValue) => {
   const value = keyValue[1]
-  Object.entries(value).forEach(keyValue => {
-    const value = keyValue[1]
-    if (value.type === ENTRY_TYPE_IMAGE) {
-      acc.push(value)
+  Object.values(value).forEach(entry => {
+    if (entry.type === ENTRY_TYPE_IMAGE) {
+      acc.push(entry)
+      const { src } = entry
+      texManager.allocateTexture({ textureId: src, size: 256 })
     }
   })
   return acc
 }, [])
-imageEntries.forEach(entry => texManager.getEntryTexCoordinate(entry, entry.value))
 
-const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
-scene.add( light2 );
-var light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(100, 300, 600)
+Promise
+  .all(imageEntries.map(({ src }) => loadImage({ src })))
+  .then(images => {
+    const newImageEntries = images.map((image, i) => {
+      const entry = {
+        ...imageEntries[i],
+        value: image
+      }
+      console.log(texManager._textureSet)
+      texManager.addAtlasEntry(entry, entry.src)
+      return entry
+    })
+    eventEmitter.emit('loaded-textures', newImageEntries)
+  })
+
+const light2 = new THREE.AmbientLight( 0xFFFFFF )
+scene.add( light2 )
+
+var light = new THREE.PointLight(0xffffff, 1);
+light.position.set(10, 30, 60)
 light.castShadow = true; // default false
 light.shadow.mapSize.width = maxTextureSize;
 light.shadow.mapSize.height = maxTextureSize;
-light.shadow.camera.left = -20;
-light.shadow.camera.right = 20;
-light.shadow.camera.top = 20;
-light.shadow.camera.bottom = -20;
-light.shadow.camera.near = 0.5;
-light.shadow.camera.far = 4000
-
-var helper = new THREE.DirectionalLightHelper(light)
-scene.add(helper);
+// light.shadow.camera.left = -20;
+// light.shadow.camera.right = 20;
+// light.shadow.camera.top = 20;
+// light.shadow.camera.bottom = -20;
+// light.shadow.camera.near = 0.5;
+// light.shadow.camera.far = 4000
 scene.add(light)
 
 renderer.shadowMap.enabled = true
@@ -84,8 +101,7 @@ scene.add(container)
 
 let viewA = new CubeView({
   radius: 20,
-  lightPosition: light.position,
-  imageEntries
+  lightPosition: light.position
 })
 viewA.interactable = true
 viewA.visible = true
@@ -94,8 +110,7 @@ viewA.name = 'view a'
 
 let viewB = new CubeView({
   radius: 20,
-  lightPosition: light.position,
-  imageEntries
+  lightPosition: light.position
 })
 viewB.name = 'view b'
 
@@ -204,11 +219,11 @@ function onMouseMove (e) {
 }
 
 function updateFrame (ts = 0) {
+  raycaster.setFromCamera(mouse, camera)
+
   const opts = {
     dt: clock.getDelta(),
     raycaster,
-    mouse,
-    camera
   }
   viewA.onUpdateFrame(opts)
   viewB.onUpdateFrame(opts)

@@ -12,6 +12,8 @@ let instance
 
 const IDEAL_TEXTURE_SIZE = 4096
 
+const DRAW_COLOR = 'green'
+
 export default class TextureManager {
   static init ({ size }) {
     if (!instance) {
@@ -37,7 +39,7 @@ export default class TextureManager {
       const yIdx = (i - xIdx) / entriesPerRow
       const drawX = xIdx * cellWidth
       const drawY = yIdx * cellWidth
-      ctx.strokeStyle = 'red'
+      ctx.strokeStyle = DRAW_COLOR
       ctx.lineWidth = 20
       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
       // ctx.font = '60px Arial'
@@ -63,8 +65,8 @@ export default class TextureManager {
     return entriesPerRow
   }
   _drawImage (entry, textureId) {
-    const { canvas, ctx, entriesPerRow, size, atlas, texture, cellWidth } = this._textureSet.get(textureId)
-    const imageSource = entry.value
+    const { ctx, entriesPerRow, atlas, texture, cellWidth } = this._textureSet.get(textureId)
+
     const texCoords = []
 
     const imageCellsHeight = 20
@@ -77,23 +79,14 @@ export default class TextureManager {
       texCoords.push([texAtlasX, texAtlasY])
     }
 
-    const {
-      x, y
-    } = entry
+    ctx.save()
+    // ctx.drawImage(image, 0, 0, size, size, 0, 0, canvas.width, canvas.height * 0.8)
+    ctx.drawImage(entry.value, 0, cellWidth * 2)
 
-    const image = new Image()
-    image.onload = () => {
-      ctx.save()
-      // ctx.drawImage(image, 0, 0, size, size, 0, 0, canvas.width, canvas.height * 0.8)
-      ctx.drawImage(image, 0, cellWidth * 2)
+    atlas.set(entry.src, texCoords)
+    // debugger
 
-      atlas.set(entry.value, texCoords)
-      // debugger
-
-      ctx.restore()
-      texture.needsUpdate = true
-    }
-    image.src = imageSource
+    ctx.restore()
 
     return texCoords
   }
@@ -118,7 +111,7 @@ export default class TextureManager {
     const drawX = atlasIdxX * cellWidth
     const drawY = atlasIdxY * cellWidth
     ctx.save()
-    ctx.fillStyle = 'black'
+    ctx.fillStyle = DRAW_COLOR
     ctx.font = `${fontSize}px monospace`
     ctx.textAlign = 'center'
     const textMetrics = ctx.measureText(entry.value)
@@ -167,7 +160,7 @@ export default class TextureManager {
     const fontSize = entry.fontSize * texWidthDelta
 
     ctx.save()
-    ctx.fillStyle = 'black'
+    ctx.fillStyle = DRAW_COLOR
     ctx.font = `${fontSize}px monospace`
 
     const textMetrics = ctx.measureText(entry.value)
@@ -187,7 +180,7 @@ export default class TextureManager {
     const drawX = atlasIdxX * cellWidth
     const drawY = atlasIdxY * cellWidth
 
-    ctx.strokeStyle = 'red'
+    ctx.strokeStyle = DRAW_COLOR
     ctx.lineWidth = 10
 
     const texAtlasesForLine = []
@@ -279,7 +272,7 @@ export default class TextureManager {
 
     return texAtlasCoords
   }
-  _addAtlasEntry (entry, textureId) {
+  addAtlasEntry (entry, textureId) {
     const { atlas, texture } = this._textureSet.get(textureId)
     let texAtlasCoords = atlas.get(entry.value)
     if (texAtlasCoords) {
@@ -313,77 +306,49 @@ export default class TextureManager {
     }
     return textureData
   }
+  allocateTexture ({ textureId, size }) {
+    const { canvas, ctx } = this._makeCanvas(textureId, size)
+    const textureUniformIdx = this._textureSet.size
+
+    const entriesPerRow = 20
+    const cellWidth = size / entriesPerRow
+
+    const texture = new THREE.CanvasTexture(canvas)
+
+    this._textureSet.set(textureId, {
+      size,
+      entriesPerRow,
+      cellWidth,
+      atlasIdxX: 0,
+      atlasIdxY: 0,
+      texture,
+      canvas,
+      ctx,
+      atlas: new Map(),
+      textureUniformIdx
+    })
+
+    console.log('allocated new texture with id', textureId)
+  }
   getEntryTexCoordinate (entry, textureId = 'characters') {
     const textureData = this._textureSet.get(textureId)
 
     let textureUniformIdx
+    let atlas
+    let texCoordinates
 
     if (textureData) {
       textureUniformIdx = textureData.textureUniformIdx
+      atlas = textureData.atlas
+      texCoordinates = atlas.get(entry.value)
+    } else {
+      // throw new Error('Texture data not found for this ID')
     }
     
-    let atlas
-    // debugger
-    if (textureData) {
-      atlas = textureData.atlas
-    } else {
-      let size = this._size
-      let lineWidth = 20
-      if (entry.type === ENTRY_TYPE_IMAGE) {
-        size = 256
-        lineWidth = 5
-      }
-      
-      const { canvas, ctx } = this._makeCanvas(textureId, size)
-
-      atlas = new Map()
-
-      const entriesPerRow = 20
-      const cellWidth = size / entriesPerRow
-
-      for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
-        const xIdx = i % entriesPerRow
-        const yIdx = (i - xIdx) / entriesPerRow
-        const drawX = xIdx * cellWidth
-        const drawY = yIdx * cellWidth
-        ctx.strokeStyle = 'red'
-        ctx.lineWidth = lineWidth
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-        // ctx.font = '60px Arial'
-        // ctx.fillText(i, drawX + cellWidth / 2, drawY + cellWidth / 2)
-        // ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
-      }
-
-      textureUniformIdx = this._textureSet.size
-
-      console.log('allocated new tex', textureUniformIdx)
-      
-      this._textureSet.set(textureId, {
-        size,
-        entriesPerRow,
-        cellWidth,
-        atlasIdxX: 0,
-        atlasIdxY: 0,
-        texture: new THREE.CanvasTexture(canvas),
-        canvas,
-        ctx,
-        atlas: new Map(),
-        textureUniformIdx
-      })
-    }
-    let texCoordinates
-    // TODO fix decoration logic
-    if (entry.type === ENTRY_TYPE_SYMBOL_DOT || entry.type === "CROSS") {
-      // texCoordinates = atlas.get(entry.type)
-      texCoordinates = atlas.get(entry.value)
-    } else {
-      texCoordinates = atlas.get(entry.value)
-    }
     if (!texCoordinates) {
-      texCoordinates = this._addAtlasEntry(entry, textureId)
-      // debugger
-      // throw new Error('cant find texture coordinate for this entry')
+      texCoordinates = this.addAtlasEntry(entry, textureId)
     }
+
     return {
       texCoordinates,
       textureUniformIdx
