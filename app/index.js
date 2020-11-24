@@ -14,17 +14,18 @@ import CubeView from './CubeView'
 
 import {
   VIEW_HOME,
-  EVT_HOVER_MENU_ITEM,
-  ENTRY_TYPE_IMAGE
+  ENTRY_TYPE_IMAGE,
+  RESOURCE_IMAGE,
+  RESOURCE_FONT,
 } from './constants'
 
 import eventEmitter from './event-emitter.js'
 
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
+let dpr = window.devicePixelRatio
 
 const domContainer = document.getElementById('app-container')
-const dpr = window.devicePixelRatio
 const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 50)
@@ -41,7 +42,7 @@ const loadManager = LoadManager.init()
 
 Object.values(screens).reduce((acc, value) => {
   Object.values(value).forEach(entry => {
-    if (entry.type === ENTRY_TYPE_IMAGE) {
+    if (entry.type === RESOURCE_IMAGE) {
       acc.push(entry)
       const { src } = entry
       loadManager.addResourceToLoad({ type: ENTRY_TYPE_IMAGE, src })
@@ -51,27 +52,20 @@ Object.values(screens).reduce((acc, value) => {
   return acc
 }, [])
 
-loadManager.loadResources().then(allResources => {
-  const imageEntries = allResources
-    .filter(({ type }) => type === ENTRY_TYPE_IMAGE)
-    .map(image => texManager.addAtlasEntry(image, image.src))
-  eventEmitter.emit('loaded-textures', imageEntries)
+loadManager.addResourceToLoad({
+  type: RESOURCE_FONT,
+  fontName: 'IBM Plex Mono:400:latin',
+  text: Object.entries(screens).reduce((acc, [key, value]) => {
+    const appendChar = char => {
+      if (!acc.includes(char)) {
+        acc += char
+      }
+    }
+    key.split('').forEach(appendChar)
+    Object.keys(value).forEach(key => key.split('').forEach(appendChar))
+    return acc
+  }, '')
 })
-
-// Promise
-//   .all(imageEntries.map(({ src }) => loadImage({ src })))
-//   .then(images => {
-//     const newImageEntries = images.map((image, i) => {
-//       const entry = {
-//         ...imageEntries[i],
-//         value: image
-//       }
-//       console.log(texManager._textureSet)
-//       texManager.addAtlasEntry(entry, entry.src)
-//       return entry
-//     })
-//     
-//   })
 
 const light2 = new THREE.AmbientLight( 0xFFFFFF )
 scene.add( light2 )
@@ -91,8 +85,6 @@ scene.add(light)
 
 renderer.shadowMap.enabled = true
 renderer.shadowMap.needsUpdate = true
-renderer.setSize(viewportWidth, viewportHeight)
-renderer.setPixelRatio(dpr)
 renderer.setClearColor(0xaaaaaa)
 renderer.shadowMap.enabled = true
 renderer.outputEncoding = THREE.sRGBEncoding
@@ -107,28 +99,52 @@ let viewA = new CubeView({
   radius: 20,
   lightPosition: light.position
 })
-viewA.interactable = true
-viewA.visible = true
-viewA.drawScreen(VIEW_HOME, screens[VIEW_HOME])
-viewA.name = 'view a'
 
 let viewB = new CubeView({
   radius: 20,
   lightPosition: light.position
 })
-viewB.name = 'view b'
 
 container.add(viewA.mesh)
 container.add(viewB.mesh)
 
-// scene.add(new THREE.CameraHelper(light.shadow.camera))
+document.addEventListener('DOMContentLoaded', init)
 
-// load all images
+function init () {
+  loadManager.loadResources().then(onLoadResources)
 
-new OrbitControls(camera, domContainer)
-document.body.addEventListener('mousemove', onMouseMove)
-document.body.addEventListener('click', onMouseClick)
-updateFrame()
+  new OrbitControls(camera, domContainer)
+  document.body.addEventListener('mousemove', onMouseMove)
+  document.body.addEventListener('click', onMouseClick)
+
+  window.addEventListener('resize', onResize)
+
+  onResize()
+  updateFrame()
+}
+
+function onLoadResources (allResources) {
+  const imageEntries = allResources
+    .filter(({ type }) => type === ENTRY_TYPE_IMAGE)
+    .map(image => texManager.addAtlasEntry(image, image.src))
+  eventEmitter.emit('loaded-textures', imageEntries)
+
+  viewA.interactable = true
+  viewA.visible = true
+
+  viewA.drawScreen(VIEW_HOME, screens[VIEW_HOME])
+}
+
+function onResize () {
+  viewportWidth = window.innerWidth
+  viewportHeight = window.innerHeight
+  dpr = window.devicePixelRatio
+  
+  camera.aspect = viewportWidth / viewportHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(viewportWidth, viewportHeight)
+  renderer.setPixelRatio(dpr)
+}
 
 function onMouseClick (e) {
   const { hoverEntryName } = store.getState()
@@ -149,21 +165,9 @@ function onMouseClick (e) {
   
   viewB.drawScreen(hoverEntryName.linksTo, screens[hoverEntryName.linksTo])
 
-  // viewA.addToRotation([0, Math.PI, 0])
-  // viewB.addToRotation([0, Math.PI, 0])
-
-  // viewA.visible = false
-  
-  // let temp = viewB
-  // viewB = viewA
-  // viewA = temp
-
-  // return
   let hasSwitchedSides = false
 
   const direction = Math.floor(Math.random() * 4)
-  // const direction = 3
-
 
   const oldRotation = container.rotation.clone()
   const newRotation = new THREE.Vector3()
