@@ -1,12 +1,16 @@
 import * as THREE from 'three'
 
-import TextureManager from '../TextureManager'
-import eventEmitter from '../event-emitter'
-import store from '../store'
+import TextureManager from './TextureManager'
+import eventEmitter from './event-emitter'
+import store from './store'
 
 import {
   setEntryHover,
-} from '../store/actions'
+} from './store/actions'
+
+import {
+  createShaderMaterial,
+} from './helpers'
 
 import {
   ENTRY_TYPE_IMAGE,
@@ -14,171 +18,9 @@ import {
   ENTRY_TYPE_WORD_LINE,
   VIEW_HOME,
   ENTRY_TYPE_SYMBOL_DOT,
-} from '../constants'
+} from './constants'
 
 const HOVERED_SCALE = 5
-
-const createShaderMaterial = ({
-  uniforms,
-  entriesPerRow,
-} = {}) => {
-
-  const material = new THREE.MeshStandardMaterial({
-    metalness: 0.8,
-    roughness: 0.7,
-    bumpScale: 0.02
-  })
-
-  material.onBeforeCompile = shader => {
-    shader.uniforms = {
-      ...uniforms,
-      ...shader.uniforms
-    }
-    shader.vertexShader = shader.vertexShader.replace('void main() {', `
-      // uniform mat3 uvTransform;
-
-      attribute float textureIdx;
-      attribute vec2 textureUVOffset;
-      attribute vec2 textureAtlasOffset;
-
-      varying float vTextureIdx;
-      // varying vec2 vUv;
-      varying vec2 vTextureUVOffset;
-      varying vec2 vTextureAtlasOffset;
-
-      void main () {
-        vTextureIdx = textureIdx;
-        // vUv = (uvTransform * vec3( uv, 1 )).xy;
-        vTextureUVOffset = textureUVOffset;
-        vTextureAtlasOffset = textureAtlasOffset;
-    `)
-    shader.fragmentShader = shader.fragmentShader.replace('void main() {', `
-
-      void main (){
-    `)
-    shader.fragmentShader = shader.fragmentShader.replace('#include <bumpmap_pars_fragment>', `
-      uniform sampler2D textures[4];
-
-      varying float vTextureIdx;
-      // varying vec2 vUv;
-      varying vec2 vTextureUVOffset;
-      varying vec2 vTextureAtlasOffset;
-      #ifdef USE_BUMPMAP
-        uniform sampler2D bumpMap;
-        uniform float bumpScale;
-        vec2 dHdxy_fwd() {
-          vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
-          vec2 dSTdx = dFdx( transformedUV );
-          vec2 dSTdy = dFdy( transformedUV );
-          float Hll = bumpScale * texture2D( bumpMap, transformedUV ).x;
-          float dBx = bumpScale * texture2D( bumpMap, transformedUV + dSTdx ).x - Hll;
-          float dBy = bumpScale * texture2D( bumpMap, transformedUV + dSTdy ).x - Hll;
-          return vec2( dBx, dBy );
-        }
-        vec3 perturbNormalArb( vec3 surf_pos, vec3 surf_norm, vec2 dHdxy ) {
-          vec3 vSigmaX = vec3( dFdx( surf_pos.x ), dFdx( surf_pos.y ), dFdx( surf_pos.z ) );
-          vec3 vSigmaY = vec3( dFdy( surf_pos.x ), dFdy( surf_pos.y ), dFdy( surf_pos.z ) );
-          vec3 vN = surf_norm;
-          vec3 R1 = cross( vSigmaY, vN );
-          vec3 R2 = cross( vN, vSigmaX );
-          float fDet = dot( vSigmaX, R1 );
-          fDet *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-          vec3 vGrad = sign( fDet ) * ( dHdxy.x * R1 + dHdxy.y * R2 );
-          return normalize( abs( fDet ) * surf_norm - vGrad );
-        }
-      #endif
-    `)
-    shader.fragmentShader = shader.fragmentShader.replace(`#include <color_fragment>`, `
-      vec4 texelColor = vec4(0.0);
-      vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
-      if (vTextureIdx < 1.0) {
-        texelColor = texture2D(textures[0], transformedUV);
-      } else if (vTextureIdx < 2.0) {
-        texelColor = texture2D(textures[1], transformedUV);
-      } else if (vTextureIdx < 3.0) {
-        texelColor = texture2D(textures[2], transformedUV);
-      } else if (vTextureIdx < 4.0) {
-        texelColor = texture2D(textures[3], transformedUV);
-      }
-
-      // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
-      // diffuseColor.rgb *= texture2D(texture, vUv);
-      diffuseColor.rgb *= vColor;
-
-      vec4 typeColor = vec4(vec3(0.2), 1.0);
-
-      diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
-    `)
-  }
-
-  return material
-
-  // const wVertex = THREE.ShaderLib.lambert.vertexShader
-  // const wFragment = THREE.ShaderLib.lambert.fragmentShader
-  // const wUniforms = THREE.ShaderLib.lambert.uniforms
-  // const material = new THREE.ShaderMaterial({
-  //   uniforms: THREE.UniformsUtils.merge([
-  //     wUniforms,
-  //     uniforms
-  //   ]),
-  //   lights: true,
-  //   vertexShader: wVertex,
-  //   fragmentShader: wFragment
-  // })
-  // material.onBeforeCompile = shader => {
-  //   Object.entries(vertexShaderSnippets).forEach(keyValue => {
-  //     const key = keyValue[0]
-  //     const value = keyValue[1]
-  //     shader.vertexShader = shader.vertexShader.replace(key, value)
-  //   })
-  //   Object.entries(fragmentShaderSnippets).forEach(keyValue => {
-  //     const key = keyValue[0]
-  //     const value = keyValue[1]
-  //     shader.fragmentShader = shader.fragmentShader.replace(key, value)
-  //   })
-  // }
-  // return material
-}
-
-// const createShaderMaterial = ({
-//   uniforms,
-//   vertexShaderSnippets = {},
-//   fragmentShaderSnippets = {}
-// } = {}) => {
-
-//   const material = new THREE.MeshStandardMaterial({
-//     metalness: 0.5,
-//     roughness: 0.3,
-//   })
-
-//   return material
-
-//   // const wVertex = THREE.ShaderLib.lambert.vertexShader
-//   // const wFragment = THREE.ShaderLib.lambert.fragmentShader
-//   // const wUniforms = THREE.ShaderLib.lambert.uniforms
-//   // const material = new THREE.ShaderMaterial({
-//   //   uniforms: THREE.UniformsUtils.merge([
-//   //     wUniforms,
-//   //     uniforms
-//   //   ]),
-//   //   lights: true,
-//   //   vertexShader: wVertex,
-//   //   fragmentShader: wFragment
-//   // })
-//   // material.onBeforeCompile = shader => {
-//   //   Object.entries(vertexShaderSnippets).forEach(keyValue => {
-//   //     const key = keyValue[0]
-//   //     const value = keyValue[1]
-//   //     shader.vertexShader = shader.vertexShader.replace(key, value)
-//   //   })
-//   //   Object.entries(fragmentShaderSnippets).forEach(keyValue => {
-//   //     const key = keyValue[0]
-//   //     const value = keyValue[1]
-//   //     shader.fragmentShader = shader.fragmentShader.replace(key, value)
-//   //   })
-//   // }
-//   // return material
-// }
 
 export default class CubeView {
   constructor ({
@@ -226,22 +68,98 @@ export default class CubeView {
 
     const frontMaterial = createShaderMaterial({
       uniforms: frontMaterialUniforms,
-      entriesPerRow: 20,
+      vertexShaderSnippets: {
+        'void main() {': `
+          // uniform mat3 uvTransform;
+
+          attribute float textureIdx;
+          attribute vec2 textureUVOffset;
+          attribute vec2 textureAtlasOffset;
+    
+          varying float vTextureIdx;
+          // varying vec2 vUv;
+          varying vec2 vTextureUVOffset;
+          varying vec2 vTextureAtlasOffset;
+    
+          void main () {
+            vTextureIdx = textureIdx;
+            // vUv = (uvTransform * vec3( uv, 1 )).xy;
+            vTextureUVOffset = textureUVOffset;
+            vTextureAtlasOffset = textureAtlasOffset;
+        `
+      },
+      fragmentShaderSnippets: {
+        '#include <bumpmap_pars_fragment>': `
+          uniform sampler2D textures[4];
+
+          varying float vTextureIdx;
+          // varying vec2 vUv;
+          varying vec2 vTextureUVOffset;
+          varying vec2 vTextureAtlasOffset;
+          #ifdef USE_BUMPMAP
+            uniform sampler2D bumpMap;
+            uniform float bumpScale;
+            vec2 dHdxy_fwd() {
+              vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
+              vec2 dSTdx = dFdx( transformedUV );
+              vec2 dSTdy = dFdy( transformedUV );
+              float Hll = bumpScale * texture2D( bumpMap, transformedUV ).x;
+              float dBx = bumpScale * texture2D( bumpMap, transformedUV + dSTdx ).x - Hll;
+              float dBy = bumpScale * texture2D( bumpMap, transformedUV + dSTdy ).x - Hll;
+              return vec2( dBx, dBy );
+            }
+            vec3 perturbNormalArb( vec3 surf_pos, vec3 surf_norm, vec2 dHdxy ) {
+              vec3 vSigmaX = vec3( dFdx( surf_pos.x ), dFdx( surf_pos.y ), dFdx( surf_pos.z ) );
+              vec3 vSigmaY = vec3( dFdy( surf_pos.x ), dFdy( surf_pos.y ), dFdy( surf_pos.z ) );
+              vec3 vN = surf_norm;
+              vec3 R1 = cross( vSigmaY, vN );
+              vec3 R2 = cross( vN, vSigmaX );
+              float fDet = dot( vSigmaX, R1 );
+              fDet *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
+              vec3 vGrad = sign( fDet ) * ( dHdxy.x * R1 + dHdxy.y * R2 );
+              return normalize( abs( fDet ) * surf_norm - vGrad );
+            }
+          #endif
+        `,
+        '#include <color_fragment>': `
+            vec4 texelColor = vec4(0.0);
+            vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
+            if (vTextureIdx < 1.0) {
+              texelColor = texture2D(textures[0], transformedUV);
+            } else if (vTextureIdx < 2.0) {
+              texelColor = texture2D(textures[1], transformedUV);
+            } else if (vTextureIdx < 3.0) {
+              texelColor = texture2D(textures[2], transformedUV);
+            } else if (vTextureIdx < 4.0) {
+              texelColor = texture2D(textures[3], transformedUV);
+            }
+      
+            // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
+            // diffuseColor.rgb *= texture2D(texture, vUv);
+            diffuseColor.rgb *= vColor;
+      
+            vec4 typeColor = vec4(vec3(0.2), 1.0);
+      
+            diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
+        `
+      }
     })
     frontMaterial.bumpMap = charactersAtlasTexture
     frontMaterial.needsUpdate = true
 
-    // const materials = [
-    //   sideMaterial,
-    //   sideMaterial,
-    //   sideMaterial,
-    //   sideMaterial,
-    //   frontMaterial,
-    //   sideMaterial,
-    // ]
+    const sideMaterial = createShaderMaterial()
+
+    const materials = [
+      sideMaterial,
+      sideMaterial,
+      sideMaterial,
+      sideMaterial,
+      frontMaterial,
+      sideMaterial,
+    ]
     
 
-    const materials = frontMaterial
+    // const materials = frontMaterial
 
     this._mesh = new THREE.InstancedMesh(geometry, materials, this._numBoxes)
     this._mesh.castShadow = true
