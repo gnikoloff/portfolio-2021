@@ -9,3 +9,9 @@ export const setLoadProgress = loadProgress => ({
   type: SET_LOAD_PROGRESS,
   loadProgress
 })
+
+export const SET_DEBUG_MODE = 'SET_DEBUG_MODE'
+export const setDebugMode = isDebugMode => ({
+  type: SET_DEBUG_MODE,
+  isDebugMode
+})

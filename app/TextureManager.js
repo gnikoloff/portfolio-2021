@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 
+import store from './store'
+
 import {
   ENTRY_TYPE_IMAGE,
   ENTRY_TYPE_INDIVIDUAL_CHAR,
@@ -62,6 +64,11 @@ export default class TextureManager {
 
     // this.addAtlasEntry({ type: ENTRY_TYPE_SYMBOL_DOT }, 'characters')
     // this.addAtlasEntry({ type: 'CROSS' }, 'characters')
+
+    const { isDebugMode } = store.getState()
+    if (isDebugMode) {
+      this._domDebugContainer.style.display = 'block'
+    }
   }
   get entriesPerRow () {
     return entriesPerRow
@@ -295,11 +302,14 @@ export default class TextureManager {
     return texAtlasCoords
   }
   _makeCanvas (textureId, size) {
+    const { isDebugMode } = store.getState()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     canvas.dataset.textureId = textureId
     canvas.width = canvas.height = size == null ? this._size : size
-    this._domDebugContainer.appendChild(canvas)
+    if (isDebugMode) {
+      this._domDebugContainer.appendChild(canvas)
+    }
     return { canvas, ctx }
   }
   getTexture (textureName) {

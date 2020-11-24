@@ -12,6 +12,10 @@ import LoadManager from './LoadManager'
 import CubeView from './CubeView'
 
 import {
+  setDebugMode
+} from './store/actions'
+
+import {
   extractViewFromURL
 } from './helpers'
 
@@ -24,6 +28,10 @@ import {
 } from './constants'
 
 import eventEmitter from './event-emitter.js'
+
+const queryParams = new URLSearchParams(window.location.search)
+const isDebugMode = queryParams.has('debugMode')
+store.dispatch(setDebugMode(isDebugMode))
 
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
@@ -119,7 +127,9 @@ document.addEventListener('DOMContentLoaded', init)
 function init () {
   loadManager.loadResources().then(onLoadResources)
 
-  new OrbitControls(camera, domContainer)
+  if (isDebugMode) {
+    new OrbitControls(camera, domContainer)
+  }
   document.body.addEventListener('mousemove', onMouseMove)
   document.body.addEventListener('click', onMouseClick)
 
