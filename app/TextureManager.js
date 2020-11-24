@@ -113,7 +113,7 @@ export default class TextureManager {
     const drawY = atlasIdxY * cellWidth
     ctx.save()
     ctx.fillStyle = DRAW_COLOR
-    ctx.font = `${fontSize}px monospace`
+    ctx.font = `${fontSize}px IBM Plex Mono`
     ctx.textAlign = 'center'
     const textMetrics = ctx.measureText(entry.value)
     ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
@@ -162,7 +162,7 @@ export default class TextureManager {
 
     ctx.save()
     ctx.fillStyle = DRAW_COLOR
-    ctx.font = `${fontSize}px monospace`
+    ctx.font = `${fontSize}px IBM Plex Mono`
 
     const textMetrics = ctx.measureText(entry.value)
 

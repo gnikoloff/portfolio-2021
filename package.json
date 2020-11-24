@@ -30,6 +30,7 @@
     "popmotion": "^9.0.0",
     "redux": "^4.0.5",
     "three": "^0.122.0",
-    "three-orbit-controls": "^82.1.0"
+    "three-orbit-controls": "^82.1.0",
+    "webfontloader": "^1.6.28"
   }
 }

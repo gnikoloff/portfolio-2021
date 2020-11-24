@@ -1,5 +1,8 @@
+import WebFont from 'webfontloader'
+
 import {
-  ENTRY_TYPE_IMAGE
+  RESOURCE_IMAGE,
+  RESOURCE_FONT
 } from './constants'
 
 import {
@@ -28,17 +31,32 @@ export default class LoadManager {
     let loadedProgress = 0
     return Promise
       .all(this._resourcesToLoad.map((resource, i) => {
-        if (resource.type === ENTRY_TYPE_IMAGE) {
+        if (resource.type === RESOURCE_IMAGE) {
           return loadImage({ src: resource.src }).then(res => {
             loadedProgress += step
+            console.log(loadedProgress)
             eventEmitter.emit('loaded-resource', { resource, loadedProgress })
             return {
               ...resource,
               value: res
-            }
+          }
           })
           .catch(err => {
             throw new Error(err)
+          })
+        } else if (resource.type === RESOURCE_FONT) {
+          return new Promise((resolve, reject) => {
+            WebFont.load({
+              google: { families: [resource.fontName] },
+              text: resource.text,
+              fontactive: () => {
+                loadedProgress += step
+                console.log(loadedProgress)
+                eventEmitter.emit('loaded-resource', { resource, loadedProgress })
+                resolve(resource)
+              },
+              fontinactive: fontName => reject(new Error('Font family failed to load', fontName))
+            })
           })
         }
       }))
