@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "watch": "parcel watch app/index.html",
-    "serve": "browser-sync start --s dist --port 8080",
+    "serve": "node server.js",
     "start": "cp -R ./app/assets ./dist/assets && npm-run-all --parallel watch serve"
   },
   "repository": {
@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "event": "^1.0.0",
+    "express": "^4.17.1",
     "popmotion": "^9.0.0",
     "redux": "^4.0.5",
     "three": "^0.122.0",
