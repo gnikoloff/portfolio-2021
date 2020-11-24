@@ -12,6 +12,10 @@ import LoadManager from './LoadManager'
 import CubeView from './CubeView'
 
 import {
+  extractViewFromURL
+} from './helpers'
+
+import {
   VIEW_HOME,
   ENTRY_TYPE_IMAGE,
   RESOURCE_IMAGE,
@@ -43,7 +47,7 @@ const texManager = TextureManager.init({ size: maxTextureSize })
 const loadManager = LoadManager.init()
 
 Object.values(screens).reduce((acc, value) => {
-  Object.values(value).forEach(entry => {
+  Object.values(value.entries).forEach(entry => {
     if (entry.type === RESOURCE_IMAGE) {
       acc.push(entry)
       const { src } = entry
@@ -64,7 +68,7 @@ loadManager.addResourceToLoad({
       }
     }
     key.split('').forEach(appendChar)
-    Object.keys(value).forEach(key => key.split('').forEach(appendChar))
+    Object.keys(value.entries).forEach(key => key.split('').forEach(appendChar))
     return acc
   }, '')
 })
@@ -121,6 +125,11 @@ function init () {
 
   window.addEventListener('resize', onResize)
 
+  window.onpopstate = () => {
+    const viewName = extractViewFromURL()
+    onNavigation(viewName, screens[viewName])
+  }
+
   onResize()
   updateFrame()
 }
@@ -134,7 +143,9 @@ function onLoadResources (allResources) {
   viewA.interactable = true
   viewA.visible = true
 
-  viewA.drawScreen(VIEW_HOME, screens[VIEW_HOME])
+  const viewName = extractViewFromURL()
+
+  viewA.drawScreen(viewName, screens[viewName])
 }
 
 function onResize () {
@@ -165,7 +176,13 @@ function onMouseClick (e) {
 
   document.title = `${hoverEntryName.linksTo.substring(0, 1)}${hoverEntryName.linksTo.substring(1).toLowerCase()} - Georgi Nikolov`
   
-  viewB.drawScreen(hoverEntryName.linksTo, screens[hoverEntryName.linksTo])
+  const pathname = screens[hoverEntryName.linksTo].url
+  window.history.pushState({}, pathname, `${window.location.origin}${pathname}`)
+  onNavigation(hoverEntryName.linksTo, screens[hoverEntryName.linksTo])
+}
+
+function onNavigation (to) {
+  viewB.drawScreen(to, screens[to])
 
   let hasSwitchedSides = false
 
@@ -218,8 +235,6 @@ function onMouseClick (e) {
     }
   })
   
-  // viewA.interactable = true
-  // viewB.interactable = true
 }
 
 function onMouseMove (e) {

@@ -263,7 +263,7 @@ export default class CubeView {
       throw new Error('Provided no view screenData')
     }
     this._screenData = screenData
-    Object.entries(screenData).map(keyValue => {
+    Object.entries(screenData.entries).map(keyValue => {
       const key = keyValue[0]
       const { x, y, type } = keyValue[1]
       const startIdx = x + this._radius * (this._radius - y)
@@ -350,7 +350,7 @@ export default class CubeView {
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         }
       } else if (viewName === 'PROJECTS') {
-        const hasDecoration = screenData['BORDER_DEFINITION'].indices.some(indice => indice === i)
+        const hasDecoration = screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
         if (hasDecoration) {
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
@@ -386,9 +386,7 @@ export default class CubeView {
       let hoveredItem
 
       if (this._screenData) {
-
-        
-        Object.entries(this._screenData).forEach(keyValue => {
+        Object.entries(this._screenData.entries).forEach(keyValue => {
           const key = keyValue[0]
           const { x, y, type, linksTo } = keyValue[1]
 

@@ -1,153 +1,174 @@
 {
   "HOME": {
-    "GEORGI NIKOLOV": {
-      "x": 3,
-      "y": 3,
-      "type": "INDIVIDUAL_CHAR"
-    },
-    "Personal Website": {
-      "x": 6,
-      "y": 5,
-      "type": "WORD_LINE",
-      "fontSize": 150,
-      "textureXOffset": 0
-    },
-    "PROJECTS": {
-      "x": 6,
-      "y": 8,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "PROJECTS"
-    },
-    "INFO": {
-      "x": 8,
-      "y": 10,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "INFO"
-    },
-    "SOCIAL": {
-      "x": 7,
-      "y": 12,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "SOCIAL"
-    },
-    "ARCHIVES": {
-      "x": 6,
-      "y": 14,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "SOCIAL"
+    "url": "/",
+    "entries": {
+      "GEORGI NIKOLOV": {
+        "x": 3,
+        "y": 3,
+        "type": "INDIVIDUAL_CHAR"
+      },
+      "Personal Website": {
+        "x": 6,
+        "y": 5,
+        "type": "WORD_LINE",
+        "fontSize": 150,
+        "textureXOffset": 0
+      },
+      "PROJECTS": {
+        "x": 6,
+        "y": 8,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "INFO": {
+        "x": 8,
+        "y": 10,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "INFO"
+      },
+      "SOCIAL": {
+        "x": 7,
+        "y": 12,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "SOCIAL"
+      },
+      "ARCHIVES": {
+        "x": 6,
+        "y": 14,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "SOCIAL"
+      }
     }
   },
   "PROJECTS": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "HOME"
-    },
-    "Focus.de": {
-      "x": 1,
-      "y": 4,
-      "type": "WORD_LINE",
-      "textureXOffset": 0.3,
-      "fontSize": 150,
-      "linksTo": "Focus.de"
-    },
-    "MetaView": {
-      "x": 1,
-      "y": 6,
-      "type": "WORD_LINE",
-      "textureXOffset": 0.3,
-      "fontSize": 150,
-      "linksTo": "MetaView"
-    },
-    "WebGL Shop": {
-      "x": 1,
-      "y": 8,
-      "type": "WORD_LINE",
-      "textureXOffset": 0.3,
-      "fontSize": 150,
-      "linksTo": "WebGL Shop"
-    },
-    "BORDER_DEFINITION": {
-      "indices": [399, 398, 397, 396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380]
+    "url": "/projects",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "HOME"
+      },
+      "Focus.de": {
+        "x": 1,
+        "y": 4,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.3,
+        "fontSize": 150,
+        "linksTo": "Focus.de"
+      },
+      "MetaView": {
+        "x": 1,
+        "y": 6,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.3,
+        "fontSize": 150,
+        "linksTo": "MetaView"
+      },
+      "WebGL Shop": {
+        "x": 1,
+        "y": 8,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.3,
+        "fontSize": 150,
+        "linksTo": "WebGL Shop"
+      },
+      "BORDER_DEFINITION": {
+        "indices": [399, 398, 397, 396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380]
+      }
     }
   },
   "INFO": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "HOME"
-    },
-    "I am frontend engineer based in Berlin": {
-      "x": 1,
-      "y": 5,
-      "type": "WORD_LINE",
-      "textureXOffset": 0.3,
-      "fontSize": 150
-    },
-    "I work with React, GLSL and Firebase": {
-      "x": 1,
-      "y": 6,
-      "type": "WORD_LINE",
-      "textureXOffset": 0.3,
-      "fontSize": 150
+    "url": "/info",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "HOME"
+      },
+      "I am frontend engineer based in Berlin": {
+        "x": 1,
+        "y": 5,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.3,
+        "fontSize": 150
+      },
+      "I work with React, GLSL and Firebase": {
+        "x": 1,
+        "y": 6,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.3,
+        "fontSize": 150
+      }
     }
   },
   "SOCIAL": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "HOME"
+    "url": "/social",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "HOME"
+      }
     }
   },
   "Focus.de": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "PROJECTS"
-    },
-    "IMAGE": {
-      "x": 1,
-      "y": 7,
-      "width": 17,
-      "height": 10,
-      "src": "/assets/py.png",
-      "type": "IMAGE"
+    "url": "/works/focus-de",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/py.png",
+        "type": "IMAGE"
+      }
     }
   },
   "MetaView": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "PROJECTS"
-    },
-    "IMAGE": {
-      "x": 1,
-      "y": 7,
-      "width": 17,
-      "height": 10,
-      "src": "/assets/nx.png",
-      "type": "IMAGE"
+    "url": "/works/meta-view",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/nx.png",
+        "type": "IMAGE"
+      }
     }
   },
   "WebGL Shop": {
-    "BACK": {
-      "x": 1,
-      "y": 2,
-      "type": "INDIVIDUAL_CHAR",
-      "linksTo": "PROJECTS"
-    },
-    "IMAGE": {
-      "x": 1,
-      "y": 7,
-      "width": 17,
-      "height": 10,
-      "src": "/assets/metal.jpg",
-      "type": "IMAGE"
+    "url": "/works/webgl-shop",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/metal.jpg",
+        "type": "IMAGE"
+      }
     }
   }
 }

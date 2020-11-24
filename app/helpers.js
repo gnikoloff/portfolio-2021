@@ -1,11 +1,29 @@
 import * as THREE from 'three'
 
+import {
+  VIEW_HOME
+} from './constants'
+
+import screens from './screens.json'
+
 export const loadImage = ({ src }) => new Promise((resolve, reject) => {
   const image = new Image()
   image.onload = () => resolve(image)
   image.onerror = () => reject(new Error(`Failed loading image with src ${src}`))
   image.src = src
 })
+
+export const extractViewFromURL = (pathname = window.location.pathname) => {
+  let viewName
+  if (pathname === '/') {
+    viewName = VIEW_HOME
+  } else if (pathname.includes('/works/')) {
+    viewName = Object.entries(screens).find(([ key, value ]) => value.url == pathname)[0]
+  } else {
+    viewName = pathname.substring(1).toUpperCase()
+  }
+  return viewName
+}
 
 export const createShaderMaterial = ({
   uniforms,
