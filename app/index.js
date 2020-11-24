@@ -47,6 +47,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: tr
 const raycaster = new THREE.Raycaster()
 const clock = new THREE.Clock()
 const container = new THREE.Object3D()
+const cameraLookAt = new THREE.Vector3()
+const cameraPosTarget = new THREE.Vector3()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 // const maxTextureSize = 1024
@@ -105,7 +107,7 @@ renderer.outputEncoding = THREE.sRGBEncoding
 domContainer.appendChild(renderer.domElement)
 
 camera.position.set(0, 0, 45)
-camera.lookAt(new THREE.Vector3())
+camera.lookAt(cameraLookAt)
 
 scene.add(container)
 
@@ -251,6 +253,9 @@ function onMouseMove (e) {
   e.preventDefault()
   mouse.x = (e.clientX / viewportWidth) * 2 - 1
   mouse.y = - (e.clientY / viewportHeight) * 2 + 1
+  
+  cameraPosTarget.x = mouse.x * 4
+  cameraPosTarget.y = mouse.y * 4
 }
 
 function updateFrame (ts = 0) {
@@ -265,6 +270,9 @@ function updateFrame (ts = 0) {
   } else {
     domLoadIndicator.classList.add('hidden')
   }
+  camera.position.x += (cameraPosTarget.x - camera.position.x) * (dt * 2)
+  camera.position.y += (cameraPosTarget.y - camera.position.y) * (dt * 2)
+  camera.lookAt(cameraLookAt)
 
   raycaster.setFromCamera(mouse, camera)
 
