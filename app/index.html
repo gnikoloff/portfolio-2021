@@ -31,13 +31,31 @@
     #texture-manager-wrapper canvas:last-of-type {
       margin-bottom: 0;
     }
+    #load-indicator {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      left: 0;
+      text-align: center;
+      z-index: 2;
+      font-family: monospace;
+      color: #111;
+      font-size: 18px;
+      transition: opacity 0.2s ease-in;
+    }
+
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
   </style>
 
 </head>
 <body>
   
   <div id="app-container"></div>
-
+  <div id="load-indicator"></div>
   <div id="texture-manager-wrapper"></div>
 
   <script src="index.js"></script>

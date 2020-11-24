@@ -7,7 +7,6 @@ import screens from './screens.json'
 const OrbitControls = OrbitControlsA(THREE)
 
 import store from './store'
-
 import TextureManager from './TextureManager'
 import LoadManager from './LoadManager'
 import CubeView from './CubeView'
@@ -17,6 +16,7 @@ import {
   ENTRY_TYPE_IMAGE,
   RESOURCE_IMAGE,
   RESOURCE_FONT,
+  FONT_NAME,
 } from './constants'
 
 import eventEmitter from './event-emitter.js'
@@ -24,8 +24,10 @@ import eventEmitter from './event-emitter.js'
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
 let dpr = window.devicePixelRatio
+let loadProgress = 0
 
 const domContainer = document.getElementById('app-container')
+const domLoadIndicator = document.getElementById('load-indicator')
 const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 50)
@@ -54,7 +56,7 @@ Object.values(screens).reduce((acc, value) => {
 
 loadManager.addResourceToLoad({
   type: RESOURCE_FONT,
-  fontName: 'IBM Plex Mono:400:latin',
+  fontName: `${FONT_NAME}:400:latin`,
   text: Object.entries(screens).reduce((acc, [key, value]) => {
     const appendChar = char => {
       if (!acc.includes(char)) {
@@ -227,16 +229,28 @@ function onMouseMove (e) {
 }
 
 function updateFrame (ts = 0) {
+  const { loadProgress: newLoadProgress } = store.getState()
+
+  const dt = clock.getDelta()
+
+  const loadProgressDiff = Math.abs(1 - loadProgress)
+  if (loadProgressDiff > 0.01) {
+    loadProgress += (newLoadProgress - loadProgress) * (dt)
+    domLoadIndicator.textContent = `${Math.round(loadProgress * 100)}%`
+  } else {
+    domLoadIndicator.classList.add('hidden')
+  }
+
   raycaster.setFromCamera(mouse, camera)
 
   const opts = {
-    dt: clock.getDelta(),
+    dt,
     raycaster,
   }
   viewA.onUpdateFrame(opts)
   viewB.onUpdateFrame(opts)
 
-  renderer.render( scene, camera );
+  renderer.render( scene, camera )
 
   requestAnimationFrame(updateFrame)
 }
