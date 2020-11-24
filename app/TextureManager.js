@@ -5,6 +5,7 @@ import {
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
   ENTRY_TYPE_SYMBOL_DOT,
+  FONT_NAME,
 } from './constants'
 
 let instance
@@ -113,7 +114,7 @@ export default class TextureManager {
     const drawY = atlasIdxY * cellWidth
     ctx.save()
     ctx.fillStyle = DRAW_COLOR
-    ctx.font = `${fontSize}px IBM Plex Mono`
+    ctx.font = `${fontSize}px ${FONT_NAME}`
     ctx.textAlign = 'center'
     const textMetrics = ctx.measureText(entry.value)
     ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2 + textMetrics.actualBoundingBoxAscent / 2)
@@ -162,7 +163,7 @@ export default class TextureManager {
 
     ctx.save()
     ctx.fillStyle = DRAW_COLOR
-    ctx.font = `${fontSize}px IBM Plex Mono`
+    ctx.font = `${fontSize}px ${FONT_NAME}`
 
     const textMetrics = ctx.measureText(entry.value)
 
