@@ -8,12 +8,8 @@ const OrbitControls = OrbitControlsA(THREE)
 
 import store from './store'
 
-import {
-  loadImage
-} from './helpers'
-
 import TextureManager from './TextureManager'
-import ExtendMaterial from './ExtendMaterial'
+import LoadManager from './LoadManager'
 import CubeView from './CubeView'
 
 import {
@@ -21,9 +17,8 @@ import {
   EVT_HOVER_MENU_ITEM,
   ENTRY_TYPE_IMAGE
 } from './constants'
-import eventEmitter from './event-emitter.js'
 
-ExtendMaterial(THREE)
+import eventEmitter from './event-emitter.js'
 
 let viewportWidth = window.innerWidth
 let viewportHeight = window.innerHeight
@@ -42,32 +37,41 @@ const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 // const maxTextureSize = 1024
 const texManager = TextureManager.init({ size: maxTextureSize })
 
-const imageEntries = Object.entries(screens).reduce((acc, keyValue) => {
-  const value = keyValue[1]
+const loadManager = LoadManager.init()
+
+Object.values(screens).reduce((acc, value) => {
   Object.values(value).forEach(entry => {
     if (entry.type === ENTRY_TYPE_IMAGE) {
       acc.push(entry)
       const { src } = entry
+      loadManager.addResourceToLoad({ type: ENTRY_TYPE_IMAGE, src })
       texManager.allocateTexture({ textureId: src, size: 256 })
     }
   })
   return acc
 }, [])
 
-Promise
-  .all(imageEntries.map(({ src }) => loadImage({ src })))
-  .then(images => {
-    const newImageEntries = images.map((image, i) => {
-      const entry = {
-        ...imageEntries[i],
-        value: image
-      }
-      console.log(texManager._textureSet)
-      texManager.addAtlasEntry(entry, entry.src)
-      return entry
-    })
-    eventEmitter.emit('loaded-textures', newImageEntries)
-  })
+loadManager.loadResources().then(allResources => {
+  const imageEntries = allResources
+    .filter(({ type }) => type === ENTRY_TYPE_IMAGE)
+    .map(image => texManager.addAtlasEntry(image, image.src))
+  eventEmitter.emit('loaded-textures', imageEntries)
+})
+
+// Promise
+//   .all(imageEntries.map(({ src }) => loadImage({ src })))
+//   .then(images => {
+//     const newImageEntries = images.map((image, i) => {
+//       const entry = {
+//         ...imageEntries[i],
+//         value: image
+//       }
+//       console.log(texManager._textureSet)
+//       texManager.addAtlasEntry(entry, entry.src)
+//       return entry
+//     })
+//     
+//   })
 
 const light2 = new THREE.AmbientLight( 0xFFFFFF )
 scene.add( light2 )
