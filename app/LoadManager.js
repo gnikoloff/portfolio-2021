@@ -9,7 +9,10 @@ import {
   loadImage
 } from './helpers'
 
-import eventEmitter from './event-emitter'
+import store from './store'
+import {
+  setLoadProgress
+} from './store/actions'
 
 let instance
 
@@ -34,8 +37,7 @@ export default class LoadManager {
         if (resource.type === RESOURCE_IMAGE) {
           return loadImage({ src: resource.src }).then(res => {
             loadedProgress += step
-            console.log(loadedProgress)
-            eventEmitter.emit('loaded-resource', { resource, loadedProgress })
+            store.dispatch(setLoadProgress(loadedProgress))
             return {
               ...resource,
               value: res
@@ -51,8 +53,7 @@ export default class LoadManager {
               text: resource.text,
               fontactive: () => {
                 loadedProgress += step
-                console.log(loadedProgress)
-                eventEmitter.emit('loaded-resource', { resource, loadedProgress })
+                store.dispatch(setLoadProgress(loadedProgress))
                 resolve(resource)
               },
               fontinactive: fontName => reject(new Error('Font family failed to load', fontName))
@@ -60,13 +61,6 @@ export default class LoadManager {
           })
         }
       }))
-      .then(allResources => {
-        eventEmitter.emit('loaded-all-resources', { allResources })
-        return allResources
-      })
-      .catch(err => {
-        throw new Error(err)
-      })
   }
 }
 

@@ -11,3 +11,5 @@ export const EVT_HOVER_MENU_ITEM = 'EVT_HOVER_MENU_ITEM'
 
 export const RESOURCE_IMAGE = 'IMAGE'
 export const RESOURCE_FONT = 'FONT'
+
+export const FONT_NAME = 'Cousine'
