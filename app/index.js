@@ -87,6 +87,7 @@ const light2 = new THREE.AmbientLight( 0xFFFFFF )
 scene.add( light2 )
 
 var light = new THREE.PointLight(0xffffff, 1);
+light.decay = 2
 light.position.set(10, 30, 60)
 light.castShadow = true; // default false
 light.shadow.mapSize.width = maxTextureSize
@@ -101,7 +102,7 @@ scene.add(light)
 
 renderer.shadowMap.enabled = true
 renderer.shadowMap.needsUpdate = true
-renderer.setClearColor(0xaaaaaa)
+renderer.setClearColor(0xFFFFFF)
 renderer.shadowMap.enabled = true
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.domElement.id = 'webgl-scene'
@@ -265,7 +266,7 @@ function onMouseMove (e) {
 }
 
 function updateFrame (ts = 0) {
-  const { loadProgress: newLoadProgress } = store.getState()
+  const { loadProgress: newLoadProgress, isDebugMode } = store.getState()
 
   const dt = clock.getDelta()
 
@@ -276,9 +277,11 @@ function updateFrame (ts = 0) {
   } else {
     domLoadIndicator.classList.add('hidden')
   }
-  camera.position.x += (cameraPosTarget.x - camera.position.x) * (dt * 2)
-  camera.position.y += (cameraPosTarget.y - camera.position.y) * (dt * 2)
-  camera.lookAt(cameraLookAt)
+  if (!isDebugMode) {
+    camera.position.x += (cameraPosTarget.x - camera.position.x) * (dt * 2)
+    camera.position.y += (cameraPosTarget.y - camera.position.y) * (dt * 2)
+    camera.lookAt(cameraLookAt)
+  }
 
   raycaster.setFromCamera(mouse, camera)
 
