@@ -50,17 +50,21 @@ export default class CubeView {
     const letterOffsets = new Float32Array(this._numBoxes * 2)
     const textureIndices = new Float32Array(this._numBoxes)
     const textureUvOffsets = new Float32Array(this._numBoxes * 2)
+    const instanceIndices = new Float32Array(this._numBoxes)
 
     for (let i = 0; i < this._numBoxes; i++) {
       const x = i % entriesPerRow / this._radius
       const y = (i - x) / entriesPerRow / this._radius
       textureUvOffsets[i * 2] = x
       textureUvOffsets[i * 2 + 1] = y
+
+      instanceIndices[i] = i / this._numBoxes
     }
 
     geometry.setAttribute('textureAtlasOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
     geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
     geometry.setAttribute('textureUVOffset', new THREE.InstancedBufferAttribute(textureUvOffsets, 2))
+    geometry.setAttribute('instanceIdx', new THREE.InstancedBufferAttribute(instanceIndices, 1))
 
     const frontMaterialUniforms = {
       textures: { value: [charactersAtlasTexture], type: 'tv' }
@@ -122,25 +126,28 @@ export default class CubeView {
           #endif
         `,
         '#include <color_fragment>': `
-            vec4 texelColor = vec4(0.0);
+            diffuseColor.rgb *= vColor;
+
             vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
             if (vTextureIdx < 1.0) {
-              texelColor = texture2D(textures[0], transformedUV);
+              vec4 texelColor = texture2D(textures[0], transformedUV);
+
+              vec4 typeColor = vec4(vec3(0.1), 1.0);
+              diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
             } else if (vTextureIdx < 2.0) {
-              texelColor = texture2D(textures[1], transformedUV);
+              vec4 texelColor = texture2D(textures[1], transformedUV);
+              diffuseColor = texelColor;
             } else if (vTextureIdx < 3.0) {
-              texelColor = texture2D(textures[2], transformedUV);
+              vec4 texelColor = texture2D(textures[2], transformedUV);
+              diffuseColor = texelColor;
             } else if (vTextureIdx < 4.0) {
-              texelColor = texture2D(textures[3], transformedUV);
+              vec4 texelColor = texture2D(textures[3], transformedUV);
+              diffuseColor = texelColor;
             }
       
             // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
             // diffuseColor.rgb *= texture2D(texture, vUv);
-            diffuseColor.rgb *= vColor;
       
-            vec4 typeColor = vec4(vec3(0.2), 1.0);
-      
-            diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
         `
       }
     })
@@ -210,13 +217,11 @@ export default class CubeView {
   }
 
   _onLoadedTextures (imageEntries) {
-    // this._imageEntries = imageEntries
-    // console.log(this._mesh.material.uniforms.textures)
-    // this._mesh.material.uniforms.textures.value = [
-    //   this._textureManager.getTexture('characters').texture,
-    //   ...imageEntries.map(entry => this._textureManager.getTexture(entry.src).texture)
-    // ]
-    // this._mesh.material.uniforms.textures.needsUpdate = true
+    this._mesh.customFrontFaceUniforms.textures.value = [
+      this._textureManager.getTexture('characters').texture,
+      ...imageEntries.map(entry => this._textureManager.getTexture(entry.src).texture)
+    ]
+    this._mesh.customFrontFaceUniforms.textures.needsUpdate = true
   }
 
   _onTransitionStart (direction) {
@@ -292,7 +297,6 @@ export default class CubeView {
             this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[i][0]
             this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[i][1]  
           }
-          this._mesh.geometry.attributes.textureIdx.needsUpdate = true
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
@@ -301,8 +305,10 @@ export default class CubeView {
           }
           // console.log('allocating ENTRY_TYPE_INDIVIDUAL_CHAR texture for ' + key)
           const {
+            textureUniformIdx,
             texCoordinates
           } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
           n++
@@ -312,20 +318,22 @@ export default class CubeView {
           value: key, x, y, type, textureXOffset: keyValue[1].textureXOffset, fontSize: keyValue[1].fontSize
         }
         const {
+          textureUniformIdx,
           texCoordinates
         } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
-        // console.log(texCoordinates)
         for (let i = startIdx, n = 0; i < startIdx + texCoordinates.length; i++) {
+          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[n][0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[n][1]
           n++
         }
       } else {
-        console.log(key)
         const {
+          textureUniformIdx,
           texCoordinates
         } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, 'characters')
         for (let i = 0; i < this._numBoxes; i++) {
+          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         }
@@ -337,12 +345,14 @@ export default class CubeView {
         type: Math.random() > 0.7 ? ENTRY_TYPE_SYMBOL_DOT : 'CROSS'
       }
       const {
+        textureUniformIdx,
         texCoordinates
       } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
       const xIdx = i % this._radius
       const yIdx = (i - xIdx) / this._radius
       if (viewName === VIEW_HOME) {
         if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
+          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         } else if (i > 20 && i < 80) {
@@ -352,6 +362,7 @@ export default class CubeView {
       } else if (viewName === 'PROJECTS') {
         const hasDecoration = screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
         if (hasDecoration) {
+          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         }
@@ -365,6 +376,7 @@ export default class CubeView {
       }
     }
 
+    this._mesh.geometry.attributes.textureIdx.needsUpdate = true
     this._mesh.geometry.attributes.textureAtlasOffset.needsUpdate = true
   }
 

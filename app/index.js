@@ -62,7 +62,7 @@ Object.values(screens).reduce((acc, value) => {
       acc.push(entry)
       const { src } = entry
       loadManager.addResourceToLoad({ type: ENTRY_TYPE_IMAGE, src })
-      texManager.allocateTexture({ textureId: src, size: 256 })
+      texManager.allocateTexture({ textureId: src, size: 512 })
     }
   })
   return acc
@@ -149,16 +149,15 @@ function init () {
 }
 
 function onLoadResources (allResources) {
-  const imageEntries = allResources
-    .filter(({ type }) => type === ENTRY_TYPE_IMAGE)
-    .map(image => texManager.addAtlasEntry(image, image.src))
+  const imageEntries = allResources.filter(({ type }) => type === ENTRY_TYPE_IMAGE)
+  imageEntries.forEach(image => texManager.addAtlasEntry(image, image.src))
   eventEmitter.emit('loaded-textures', imageEntries)
+
 
   viewA.interactable = true
   viewA.visible = true
 
   const viewName = extractViewFromURL()
-
   viewA.drawScreen(viewName, screens[viewName])
 }
 
@@ -190,6 +189,9 @@ function onMouseClick (e) {
 
   if (hoverEntryName.linksTo.includes('mailto')) {
     window.open(hoverEntryName.linksTo)
+    return
+  } else if (hoverEntryName.linksTo.includes('https') || hoverEntryName.linksTo.includes('http')) {
+    window.open(hoverEntryName.linksTo, '_blank')
     return
   }
 
