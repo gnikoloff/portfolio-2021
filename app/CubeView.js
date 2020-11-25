@@ -168,7 +168,7 @@ export default class CubeView {
     this._mesh.customFrontFaceUniforms = frontMaterialUniforms
 
     for (let i = 0; i < this._numBoxes; i++) {
-      this._mesh.setColorAt(i, new THREE.Color(0xaaaaaa).setScalar(0.7 + Math.random() * 0.2))
+      this._mesh.setColorAt(i, new THREE.Color(0xEEEEEE).setScalar(0.7 + Math.random() * 0.2))
     }
 
     eventEmitter.on('loaded-textures', this._onLoadedTextures.bind(this))
