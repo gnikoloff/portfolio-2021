@@ -101,7 +101,7 @@
         "textureXOffset": 0.1,
         "fontSize": 120
       },
-      "and graphics such as websites, apps, VR and 3D": {
+      "and graphics such as websites, apps, VR, AR and 3D": {
         "x": 1,
         "y": 7,
         "type": "WORD_LINE",
@@ -164,7 +164,7 @@
         "textureXOffset": 0.1,
         "fontSize": 110
       },
-      "Photoshop Illustrator Animation theory, math & principles": {
+      "Photoshop Illustrator Animation theory math & principles": {
         "x": 1,
         "y": 19,
         "type": "WORD_LINE",
