@@ -87,19 +87,89 @@
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "HOME"
       },
-      "I am frontend engineer based in Berlin": {
+      "I am a frontend developer in Berlin, Germany.": {
         "x": 1,
-        "y": 5,
+        "y": 4,
         "type": "WORD_LINE",
-        "textureXOffset": 0.3,
-        "fontSize": 150
+        "textureXOffset": 0.1,
+        "fontSize": 120
       },
-      "I work with React, GLSL and Firebase": {
+      "I specialize in developing rich user interfaces": {
         "x": 1,
         "y": 6,
         "type": "WORD_LINE",
-        "textureXOffset": 0.3,
-        "fontSize": 150
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "and graphics such as websites, apps, VR and 3D": {
+        "x": 1,
+        "y": 7,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "visualizations and simulations. ": {
+        "x": 1,
+        "y": 8,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "My daily work consists of developing tools and apps": {
+        "x": 1,
+        "y": 10,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "using React and Firebase and creating interactive": {
+        "x": 1,
+        "y": 11,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "graphics with WebGL, SVG and canvas2d.": {
+        "x": 1,
+        "y": 12,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "I am currently working in Xymatic GmbH, before that": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "Wonderland Studio in Amsterdam and other agencies.": {
+        "x": 1,
+        "y": 15,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "SKILLS": {
+        "x": 1,
+        "y": 17,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 120
+      },
+      "WebGL GLSL JS SVG Firebase React Vue Node.js Wordpress": {
+        "x": 1,
+        "y": 18,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 110
+      },
+      "Photoshop Illustrator Animation theory, math & principles": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.1,
+        "fontSize": 110
       }
     }
   },
