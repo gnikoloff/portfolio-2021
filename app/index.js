@@ -20,11 +20,11 @@ import {
 } from './helpers'
 
 import {
-  VIEW_HOME,
   ENTRY_TYPE_IMAGE,
   RESOURCE_IMAGE,
   RESOURCE_FONT,
   FONT_NAME,
+  MAX_VIEWPORT_WIDTH,
 } from './constants'
 
 import eventEmitter from './event-emitter.js'
@@ -33,8 +33,8 @@ const queryParams = new URLSearchParams(window.location.search)
 const isDebugMode = queryParams.has('debugMode')
 store.dispatch(setDebugMode(isDebugMode))
 
-let viewportWidth = window.innerWidth
-let viewportHeight = window.innerHeight
+let viewportWidth
+let viewportHeight
 let dpr = window.devicePixelRatio
 let loadProgress = 0
 
@@ -43,7 +43,7 @@ const domLoadIndicator = document.getElementById('load-indicator')
 const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 50)
-const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMapEnabled: true })
+const renderer = new THREE.WebGLRenderer({ antialias: true })
 const raycaster = new THREE.Raycaster()
 const clock = new THREE.Clock()
 const container = new THREE.Object3D()
@@ -89,8 +89,8 @@ scene.add( light2 )
 var light = new THREE.PointLight(0xffffff, 1);
 light.position.set(10, 30, 60)
 light.castShadow = true; // default false
-light.shadow.mapSize.width = maxTextureSize;
-light.shadow.mapSize.height = maxTextureSize;
+light.shadow.mapSize.width = maxTextureSize
+light.shadow.mapSize.height = maxTextureSize
 // light.shadow.camera.left = -20;
 // light.shadow.camera.right = 20;
 // light.shadow.camera.top = 20;
@@ -104,6 +104,7 @@ renderer.shadowMap.needsUpdate = true
 renderer.setClearColor(0xaaaaaa)
 renderer.shadowMap.enabled = true
 renderer.outputEncoding = THREE.sRGBEncoding
+renderer.domElement.id = 'webgl-scene'
 domContainer.appendChild(renderer.domElement)
 
 camera.position.set(0, 0, 45)
@@ -161,8 +162,13 @@ function onLoadResources (allResources) {
 }
 
 function onResize () {
-  viewportWidth = window.innerWidth
-  viewportHeight = window.innerHeight
+  if (window.innerWidth > MAX_VIEWPORT_WIDTH) {
+    viewportWidth = window.innerWidth * (MAX_VIEWPORT_WIDTH / window.innerWidth)
+    viewportHeight = window.innerHeight * (MAX_VIEWPORT_WIDTH / window.innerWidth)
+  } else {
+    viewportWidth = window.innerWidth
+    viewportHeight = window.innerHeight
+  }
   dpr = window.devicePixelRatio
   
   camera.aspect = viewportWidth / viewportHeight
@@ -251,9 +257,9 @@ function onNavigation (to) {
 
 function onMouseMove (e) {
   e.preventDefault()
-  mouse.x = (e.clientX / viewportWidth) * 2 - 1
-  mouse.y = - (e.clientY / viewportHeight) * 2 + 1
-  
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+  mouse.y = - (e.clientY / window.innerHeight) * 2 + 1
+
   cameraPosTarget.x = mouse.x * 4
   cameraPosTarget.y = mouse.y * 4
 }

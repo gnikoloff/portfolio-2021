@@ -1,3 +1,5 @@
+export const MAX_VIEWPORT_WIDTH = 1920
+
 export const VIEW_HOME = 'HOME'
 
 export const ENTRY_TYPE_IMAGE = 'IMAGE'
