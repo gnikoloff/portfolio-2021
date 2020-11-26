@@ -18,6 +18,7 @@ import {
   ENTRY_TYPE_WORD_LINE,
   VIEW_HOME,
   ENTRY_TYPE_SYMBOL_DOT,
+  TEXTURE_LABEL_ATLAS,
 } from './constants'
 
 const HOVERED_SCALE = 5
@@ -44,7 +45,7 @@ export default class CubeView {
     const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
     geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5))
 
-    const { entriesPerRow, texture: charactersAtlasTexture } = this._textureManager.getTexture('characters')
+    const { entriesPerRow, texture: charactersAtlasTexture } = this._textureManager.getTexture(TEXTURE_LABEL_ATLAS)
     const textureSize = new THREE.Vector2(entriesPerRow, entriesPerRow)
 
     const letterOffsets = new Float32Array(this._numBoxes * 2)
@@ -199,7 +200,7 @@ export default class CubeView {
     if (!visible) {
       const {
         texCoordinates
-      } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, 'characters')
+      } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, TEXTURE_LABEL_ATLAS)
       for (let i = 0; i < this._numBoxes; i++) {
         this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
         this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
@@ -208,7 +209,7 @@ export default class CubeView {
     }
 
     if (visible) {
-      this._mesh.customFrontFaceUniforms.textures.value[0] = this._textureManager.getTexture('characters').texture
+      this._mesh.customFrontFaceUniforms.textures.value[0] = this._textureManager.getTexture(TEXTURE_LABEL_ATLAS).texture
       this._mesh.customFrontFaceUniforms.textures.needsUpdate = true
     }
 
@@ -226,7 +227,7 @@ export default class CubeView {
 
   _onLoadedTextures (imageEntries) {
     this._mesh.customFrontFaceUniforms.textures.value = [
-      this._textureManager.getTexture('characters').texture,
+      this._textureManager.getTexture(TEXTURE_LABEL_ATLAS).texture,
       ...imageEntries.map(entry => this._textureManager.getTexture(entry.src).texture)
     ]
     this._mesh.customFrontFaceUniforms.textures.needsUpdate = true
@@ -316,7 +317,7 @@ export default class CubeView {
           const {
             textureUniformIdx,
             texCoordinates
-          } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+          } = this._textureManager.getEntryTexCoordinate(entry, TEXTURE_LABEL_ATLAS)
           this._mesh.geometry.attributes.textColor.array[i * 3] = color[0]
           this._mesh.geometry.attributes.textColor.array[i * 3 + 1] = color[1]
           this._mesh.geometry.attributes.textColor.array[i * 3 + 2] = color[2]
@@ -334,7 +335,7 @@ export default class CubeView {
         const {
           textureUniformIdx,
           texCoordinates
-        } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+        } = this._textureManager.getEntryTexCoordinate(entry, TEXTURE_LABEL_ATLAS)
         for (let i = startIdx, n = 0; i < startIdx + texCoordinates.length; i++) {
           this._mesh.geometry.attributes.textColor.array[i * 3] = color[0]
           this._mesh.geometry.attributes.textColor.array[i * 3 + 1] = color[1]
@@ -349,7 +350,7 @@ export default class CubeView {
         const {
           textureUniformIdx,
           texCoordinates
-        } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, 'characters')
+        } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, TEXTURE_LABEL_ATLAS)
         for (let i = 0; i < this._numBoxes; i++) {
           this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
@@ -365,7 +366,7 @@ export default class CubeView {
       const {
         textureUniformIdx,
         texCoordinates
-      } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+      } = this._textureManager.getEntryTexCoordinate(entry, TEXTURE_LABEL_ATLAS)
       const xIdx = i % this._radius
       const yIdx = (i - xIdx) / this._radius
       if (viewName === VIEW_HOME) {

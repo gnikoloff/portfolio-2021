@@ -7,7 +7,9 @@ import {
   ENTRY_TYPE_INDIVIDUAL_CHAR,
   ENTRY_TYPE_WORD_LINE,
   ENTRY_TYPE_SYMBOL_DOT,
+  ENTRY_TYPE_SYMBOL_CROSS,
   FONT_NAME,
+  TEXTURE_LABEL_ATLAS
 } from './constants'
 
 let instance
@@ -32,7 +34,7 @@ export default class TextureManager {
 
     this._domDebugContainer = document.getElementById('texture-manager-wrapper')
 
-    const { canvas, ctx } = this._makeCanvas('characters', size)
+    const { canvas, ctx } = this._makeCanvas(TEXTURE_LABEL_ATLAS, size)
     const entriesPerRow = 20
     const cellWidth = size / entriesPerRow
 
@@ -49,7 +51,7 @@ export default class TextureManager {
       // ctx.strokeRect(drawX, drawY, cellWidth, cellWidth)
     }
 
-    this._textureSet.set('characters', {
+    this._textureSet.set(TEXTURE_LABEL_ATLAS, {
       size,
       entriesPerRow,
       cellWidth,
@@ -62,8 +64,8 @@ export default class TextureManager {
       textureUniformIdx: this._textureSet.size
     })
 
-    // this.addAtlasEntry({ type: ENTRY_TYPE_SYMBOL_DOT }, 'characters')
-    // this.addAtlasEntry({ type: 'CROSS' }, 'characters')
+    // this.addAtlasEntry({ type: ENTRY_TYPE_SYMBOL_DOT }, TEXTURE_LABEL_ATLAS)
+    // this.addAtlasEntry({ type: 'CROSS' }, TEXTURE_LABEL_ATLAS)
 
     const { isDebugMode } = store.getState()
     if (isDebugMode) {
@@ -111,7 +113,7 @@ export default class TextureManager {
 
     let {
       atlasIdxX,
-      atlasIdxY,
+      atlasIdxY
     } = textureData
 
     const texWidthDelta = size / IDEAL_TEXTURE_SIZE
@@ -120,7 +122,7 @@ export default class TextureManager {
     const drawX = atlasIdxX * cellWidth
     const drawY = atlasIdxY * cellWidth
     ctx.save()
-    ctx.fillStyle = DRAW_COLOR
+    // ctx.fillStyle = DRAW_COLOR
     ctx.font = `${fontSize}px ${FONT_NAME}`
     ctx.textAlign = 'center'
     const textMetrics = ctx.measureText(entry.value)
@@ -238,10 +240,10 @@ export default class TextureManager {
     ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2)
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT) {
       ctx.beginPath()
-      ctx.arc(0, 0, 50, 0, Math.PI * 2, false)
+      ctx.arc(0, 0, 24, 0, Math.PI * 2, false)
       ctx.closePath()
       ctx.fill()
-    } else if (entry.type === 'CROSS') {
+    } else if (entry.type === ENTRY_TYPE_SYMBOL_CROSS) {
       const idealRadius = 50
       const idealLineWidth = 30
       const texWidthDelta = size / IDEAL_TEXTURE_SIZE
@@ -256,6 +258,8 @@ export default class TextureManager {
       ctx.moveTo(radius, -radius)
       ctx.lineTo(-radius, radius)
       ctx.stroke()
+    } else {
+      
     }
     ctx.restore()
     const texAtlasX = atlasIdxX / entriesPerRow
@@ -343,7 +347,7 @@ export default class TextureManager {
 
     console.log('allocated new texture with id', textureId)
   }
-  getEntryTexCoordinate (entry, textureId = 'characters') {
+  getEntryTexCoordinate (entry, textureId = TEXTURE_LABEL_ATLAS) {
     // console.log(entry.value)
     const textureData = this._textureSet.get(textureId)
 
