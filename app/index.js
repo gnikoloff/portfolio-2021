@@ -162,19 +162,24 @@ function onLoadResources (allResources) {
 }
 
 function onResize () {
+
+  dpr = window.devicePixelRatio
   if (window.innerWidth > MAX_VIEWPORT_WIDTH) {
-    viewportWidth = window.innerWidth * (MAX_VIEWPORT_WIDTH / window.innerWidth)
-    viewportHeight = window.innerHeight * (MAX_VIEWPORT_WIDTH / window.innerWidth)
+    const widthDelta = (MAX_VIEWPORT_WIDTH / window.innerWidth)
+    viewportWidth = window.innerWidth * widthDelta
+    viewportHeight = window.innerHeight * widthDelta
+    if (dpr >= 2) {
+      dpr = 1.5
+    }
   } else {
     viewportWidth = window.innerWidth
     viewportHeight = window.innerHeight
   }
-  dpr = window.devicePixelRatio
   
   camera.aspect = viewportWidth / viewportHeight
   camera.updateProjectionMatrix()
-  renderer.setSize(viewportWidth, viewportHeight)
   renderer.setPixelRatio(dpr)
+  renderer.setSize(viewportWidth, viewportHeight, false)
 }
 
 function onMouseClick (e) {
