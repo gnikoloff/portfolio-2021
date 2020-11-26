@@ -13,11 +13,11 @@ export const loadImage = ({ src }) => new Promise((resolve, reject) => {
   image.src = src
 })
 
-export const extractViewFromURL = (pathname = window.location.pathname) => {
+export const extractViewFromURL = ({ pathname = window.location.pathname } = {}) => {
   let viewName
   if (pathname === '/') {
     viewName = VIEW_HOME
-  } else if (pathname.includes('/works/')) {
+  } else if (pathname.includes('/works/') || pathname.includes('/info/')) {
     viewName = Object.entries(screens).find(([ key, value ]) => value.url == pathname)[0]
   } else {
     viewName = pathname.substring(1).toUpperCase()
@@ -28,13 +28,16 @@ export const extractViewFromURL = (pathname = window.location.pathname) => {
 export const createShaderMaterial = ({
   uniforms,
   vertexShaderSnippets,
-  fragmentShaderSnippets
+  fragmentShaderSnippets,
+  metalness = 0.8,
+  roughness = 0.7,
+  bumpScale = 0.02
 } = {}) => {
 
   const material = new THREE.MeshStandardMaterial({
-    metalness: 0.8,
-    roughness: 0.7,
-    bumpScale: 0.02
+    metalness,
+    roughness,
+    bumpScale
   })
 
   material.onBeforeCompile = shader => {
