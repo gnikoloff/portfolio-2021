@@ -359,8 +359,8 @@ export default class CubeView {
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         }
-      } else if (viewName === 'PROJECTS') {
-        const hasDecoration = screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
+      } else {
+        const hasDecoration = screenData.entries['BORDER_DEFINITION'] && screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
         if (hasDecoration) {
           this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]

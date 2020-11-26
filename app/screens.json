@@ -181,6 +181,51 @@
         "y": 2,
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "HOME"
+      },
+      "T W I T T E R": {
+        "x": 7,
+        "y": 7,
+        "type": "WORD_LINE",
+        "fontSize": 140,
+        "textureXOffset": 0.2,
+        "linksTo": "https://twitter.com/georgiNikoloff"
+      },
+      "C O D E P E N": {
+        "x": 7,
+        "y": 10,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.3,
+        "fontSize": 140,
+        "linksTo": "https://codepen.io/gbnikolov"
+      },
+      "G I T H U B": {
+        "x": 7,
+        "y": 13,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.7,
+        "fontSize": 140,
+        "linksTo": "https://github.com/gnikoloff"
+      },
+      "E M A I L": {
+        "x": 8,
+        "y": 16,
+        "type": "WORD_LINE",
+        "textureXOffset": 0.2,
+        "fontSize": 140,
+        "linksTo": "mailto:nikoloffgeorgi@gmail.com"
+      },
+      "BORDER_DEFINITION": {
+        "indices": [
+          24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+          45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+          324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335,
+          305, 306, 307, 308, 309, 310, 311, 312, 313, 314,
+          82, 102, 122, 142, 162, 182, 202, 222, 242, 262,
+          103, 123, 143, 163, 183, 203, 223, 243,
+          116, 136, 156, 176, 196, 216, 236, 256,
+          97, 117, 137, 157, 177, 197, 217, 237, 257, 277,
+          
+        ]
       }
     }
   },
@@ -219,6 +264,20 @@
         "height": 10,
         "src": "/assets/nx.png",
         "type": "IMAGE"
+      },
+      "Meta View": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 170,
+        "textureXOffset": 0.1
+      },
+      "Lorem ipsim dolar sit amet": {
+        "x": 1,
+        "y": 16,
+        "type": "WORD_LINE",
+        "fontSize": 120,
+        "textureXOffset": 0.1
       }
     }
   },
@@ -236,8 +295,14 @@
         "y": 7,
         "width": 17,
         "height": 10,
-        "src": "/assets/metal.jpg",
+        "src": "/assets/ar-demo.jpg",
         "type": "IMAGE"
+      },
+      "OPEN": {
+        "x": 1,
+        "y": 18,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "https://google.de"
       }
     }
   }

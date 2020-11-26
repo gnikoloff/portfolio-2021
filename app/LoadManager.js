@@ -48,6 +48,12 @@ export default class LoadManager {
           })
         } else if (resource.type === RESOURCE_FONT) {
           return new Promise((resolve, reject) => {
+            const { isDebugMode } = store.getState()
+            if (isDebugMode) {
+              loadedProgress += step
+              store.dispatch(setLoadProgress(loadedProgress))
+              return resolve(resource)
+            }
             WebFont.load({
               google: { families: [resource.fontName] },
               text: resource.text,
@@ -56,7 +62,7 @@ export default class LoadManager {
                 store.dispatch(setLoadProgress(loadedProgress))
                 resolve(resource)
               },
-              fontinactive: fontName => reject(new Error('Font family failed to load', fontName))
+              fontinactive: fontName => reject(new Error('Font family failed to load', fontName)),
             })
           })
         }

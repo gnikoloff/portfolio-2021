@@ -190,7 +190,7 @@ function onMouseClick (e) {
   if (hoverEntryName.linksTo.includes('mailto')) {
     window.open(hoverEntryName.linksTo)
     return
-  } else if (hoverEntryName.linksTo.includes('https') || hoverEntryName.linksTo.includes('http')) {
+  } else if (hoverEntryName.linksTo.includes('http')) {
     window.open(hoverEntryName.linksTo, '_blank')
     return
   }

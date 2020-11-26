@@ -166,7 +166,7 @@ export default class TextureManager {
 
     
     const texWidthDelta = size / IDEAL_TEXTURE_SIZE
-    const fontSize = entry.fontSize * texWidthDelta
+    const fontSize = (entry.fontSize || 120)* texWidthDelta
 
     ctx.save()
     ctx.fillStyle = DRAW_COLOR
@@ -174,8 +174,8 @@ export default class TextureManager {
 
     const textMetrics = ctx.measureText(entry.value)
 
-    const { textureXOffset } = entry
-    // const cellsOccupied = Math.ceil(textMetrics.width / cellWidth) + Math.ceil(cellWidth * textureXOffset / size)
+    const { textureXOffset = 0 } = entry
+    // const cellsOccupied = Math.round(textMetrics.width / cellWidth) + Math.ceil(cellWidth * textureXOffset / size)
 
     const cellsOccupied = Math.ceil(textMetrics.width / cellWidth)
 
