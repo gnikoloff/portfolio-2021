@@ -51,6 +51,7 @@ export default class CubeView {
     const textureIndices = new Float32Array(this._numBoxes)
     const textureUvOffsets = new Float32Array(this._numBoxes * 2)
     const instanceIndices = new Float32Array(this._numBoxes)
+    const textColors = new Float32Array(this._numBoxes * 3)
 
     for (let i = 0; i < this._numBoxes; i++) {
       const x = i % entriesPerRow / this._radius
@@ -65,6 +66,7 @@ export default class CubeView {
     geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
     geometry.setAttribute('textureUVOffset', new THREE.InstancedBufferAttribute(textureUvOffsets, 2))
     geometry.setAttribute('instanceIdx', new THREE.InstancedBufferAttribute(instanceIndices, 1))
+    geometry.setAttribute('textColor', new THREE.InstancedBufferAttribute(textColors, 3))
 
     const frontMaterialUniforms = {
       textures: { value: [charactersAtlasTexture], type: 'tv' }
@@ -79,17 +81,19 @@ export default class CubeView {
           attribute float textureIdx;
           attribute vec2 textureUVOffset;
           attribute vec2 textureAtlasOffset;
+          attribute vec3 textColor;
     
           varying float vTextureIdx;
-          // varying vec2 vUv;
           varying vec2 vTextureUVOffset;
           varying vec2 vTextureAtlasOffset;
+          varying vec3 vTextColor;
     
           void main () {
             vTextureIdx = textureIdx;
             // vUv = (uvTransform * vec3( uv, 1 )).xy;
             vTextureUVOffset = textureUVOffset;
             vTextureAtlasOffset = textureAtlasOffset;
+            vTextColor = textColor;
         `
       },
       fragmentShaderSnippets: {
@@ -100,6 +104,8 @@ export default class CubeView {
           // varying vec2 vUv;
           varying vec2 vTextureUVOffset;
           varying vec2 vTextureAtlasOffset;
+          varying vec3 vTextColor;
+
           #ifdef USE_BUMPMAP
             uniform sampler2D bumpMap;
             uniform float bumpScale;
@@ -129,19 +135,21 @@ export default class CubeView {
             diffuseColor.rgb *= vColor;
 
             vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
-            if (vTextureIdx < 1.0) {
-              vec4 texelColor = texture2D(textures[0], transformedUV);
 
-              vec4 typeColor = vec4(vec3(0.1), 1.0);
+            vec4 typeColor = vec4(vTextColor, 1.0);
+
+            vec4 texelColor = texture2D(textures[0], transformedUV);
+            if (vTextureIdx < 1.0) {
+              
               diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
             } else if (vTextureIdx < 2.0) {
-              vec4 texelColor = texture2D(textures[1], transformedUV);
+              texelColor = texture2D(textures[1], transformedUV);
               diffuseColor = texelColor;
             } else if (vTextureIdx < 3.0) {
-              vec4 texelColor = texture2D(textures[2], transformedUV);
+              texelColor = texture2D(textures[2], transformedUV);
               diffuseColor = texelColor;
             } else if (vTextureIdx < 4.0) {
-              vec4 texelColor = texture2D(textures[3], transformedUV);
+              texelColor = texture2D(textures[3], transformedUV);
               diffuseColor = texelColor;
             }
       
@@ -300,6 +308,7 @@ export default class CubeView {
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
+          const color = keyValue[1].color || [0.1, 0.1, 0.1]
           const entry = {
             value: key[n], type, fontSize: keyValue[1].fontSize
           }
@@ -308,12 +317,17 @@ export default class CubeView {
             textureUniformIdx,
             texCoordinates
           } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
+          this._mesh.geometry.attributes.textColor.array[i * 3] = color[0]
+          this._mesh.geometry.attributes.textColor.array[i * 3 + 1] = color[1]
+          this._mesh.geometry.attributes.textColor.array[i * 3 + 2] = color[2]
           this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
           n++
         }
+        this._mesh.geometry.attributes.textColor.needsUpdate = true
       } else if (type === ENTRY_TYPE_WORD_LINE) {
+        const color = keyValue[1].color || [0.1, 0.1, 0.1]
         const entry = {
           value: key, x, y, type, textureXOffset: keyValue[1].textureXOffset, fontSize: keyValue[1].fontSize
         }
@@ -322,11 +336,15 @@ export default class CubeView {
           texCoordinates
         } = this._textureManager.getEntryTexCoordinate(entry, 'characters')
         for (let i = startIdx, n = 0; i < startIdx + texCoordinates.length; i++) {
+          this._mesh.geometry.attributes.textColor.array[i * 3] = color[0]
+          this._mesh.geometry.attributes.textColor.array[i * 3 + 1] = color[1]
+          this._mesh.geometry.attributes.textColor.array[i * 3 + 2] = color[2]
           this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[n][0]
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[n][1]
           n++
         }
+        this._mesh.geometry.attributes.textColor.needsUpdate = true
       } else {
         const {
           textureUniformIdx,
