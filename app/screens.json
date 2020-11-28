@@ -49,33 +49,64 @@
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "HOME"
       },
-      "Focus.de": {
+      "01.": {
+        "id": "ordered-list-index",
         "x": 1,
-        "y": 4,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.3,
-        "fontSize": 150,
+        "y": 5,
+      },
+      "Delight Player": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 5,
         "linksTo": "Focus.de"
       },
-      "MetaView": {
+      "02.": {
+        "id": "ordered-list-index",
         "x": 1,
-        "y": 6,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.3,
-        "fontSize": 150,
+        "y": 7
+      },
+      "Delight MetaView": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 7,
         "linksTo": "MetaView"
       },
-      "WebGL Shop": {
+      "03.": {
+        "id": "ordered-list-index",
         "x": 1,
-        "y": 8,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.3,
-        "fontSize": 150,
+        "y": 9
+      },
+      "ACRNM Prototype Demo Store": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 9,
         "linksTo": "WebGL Shop"
       },
-      "BORDER_DEFINITION": {
-        "indices": [399, 398, 397, 396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380]
-      }
+      "04.": {
+        "id": "ordered-list-index",
+        "x": 1,
+        "y": 11
+      },
+      "Model Viewer AR Demo Store": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 11,
+        "linksTo": "WebGL Shop"
+      },
+      "05.": {
+        "id": "ordered-list-index",
+        "x": 1,
+        "y": 13
+      },
+      "Old CodeSketch": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 13,
+        "linksTo": "WebGL Shop"
+      },
+      // "BORDER_DEFINITION": {
+      //   "indices": [399, 398, 397, 396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380]
+      // }
     }
   },
   "INFO": {

@@ -9,7 +9,8 @@ import {
   ENTRY_TYPE_SYMBOL_DOT,
   ENTRY_TYPE_SYMBOL_CROSS,
   FONT_NAME,
-  TEXTURE_LABEL_ATLAS
+  TEXTURE_LABEL_ATLAS,
+  ENTRY_TYPE_SYMBOL_SQUARE
 } from './constants'
 
 let instance
@@ -238,15 +239,16 @@ export default class TextureManager {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
     ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2)
+    const texWidthDelta = size / IDEAL_TEXTURE_SIZE
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT) {
+      const idealRadius = 32
       ctx.beginPath()
-      ctx.arc(0, 0, 24, 0, Math.PI * 2, false)
+      ctx.arc(0, 0, idealRadius * texWidthDelta, 0, Math.PI * 2, false)
       ctx.closePath()
       ctx.fill()
     } else if (entry.type === ENTRY_TYPE_SYMBOL_CROSS) {
       const idealRadius = 50
       const idealLineWidth = 30
-      const texWidthDelta = size / IDEAL_TEXTURE_SIZE
       const radius = idealRadius * texWidthDelta
       const lineWidth = idealLineWidth * texWidthDelta
       ctx.lineWidth = lineWidth
@@ -258,8 +260,10 @@ export default class TextureManager {
       ctx.moveTo(radius, -radius)
       ctx.lineTo(-radius, radius)
       ctx.stroke()
-    } else {
-      
+    } else if (entry.type === ENTRY_TYPE_SYMBOL_SQUARE) {
+      const idealRadius = 100
+      const radius = idealRadius * texWidthDelta
+      ctx.strokeRect(-radius / 2, -radius / 2, radius / 2, radius / 2)
     }
     ctx.restore()
     const texAtlasX = atlasIdxX / entriesPerRow
