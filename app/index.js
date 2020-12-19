@@ -159,8 +159,8 @@ function init () {
 function onLoadResources (allResources) {
   const imageEntries = allResources.filter(({ type }) => type === ENTRY_TYPE_IMAGE)
   imageEntries.forEach(image => texManager.addAtlasEntry(image, image.src))
-  eventEmitter.emit('loaded-textures', imageEntries)
 
+  document.dispatchEvent(new CustomEvent('loaded-textures', { detail: { imageEntries } }))
 
   viewA.interactable = true
   viewA.visible = true
@@ -260,7 +260,7 @@ function onNavigation (to) {
 
   viewA.interactable = false
 
-  eventEmitter.emit('transitioning-start', direction)
+  document.dispatchEvent(new CustomEvent('transitioning-start', { detail: { direction } }))
   viewB.visible = true
   viewB.interactable = true
   
@@ -272,7 +272,7 @@ function onNavigation (to) {
     duration: 1000,
     ease: popmotion.easeOut,
     onUpdate: v => {
-      eventEmitter.emit('transitioning', v)
+      document.dispatchEvent(new CustomEvent('transitioning', { detail: { v } }))
       currentQuaternion.slerp(targetQuaternion, v)
       // container.setRotationFromQuaternion(currentQuaternion)
       if (v > 0.5 && !hasSwitchedSides) {
@@ -285,7 +285,7 @@ function onNavigation (to) {
       const temp = viewB
       viewB = viewA
       viewA = temp
-      eventEmitter.emit('transitioning-end')
+      document.dispatchEvent(new CustomEvent('transitioning-end'))
     }
   })
   

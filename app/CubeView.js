@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-import TextureManager from './TextureManager'
+import TextureManager from './managers/TextureManager'
 import eventEmitter from './event-emitter'
 import store from './store'
 
@@ -24,6 +24,8 @@ import {
 import styles from './label-styles.json'
 
 const HOVERED_SCALE = 5
+const DEFAULT_COLOR = [0, 0, 0]
+
 const styleMap = new Map(Object.entries(styles))
 
 export default class CubeView {
@@ -43,9 +45,9 @@ export default class CubeView {
     this._scaleTargets = new Float32Array(this._numBoxes).fill(1)
     this._transitioningScaleTargets = new Float32Array(this._numBoxes).fill(1)
 
-    for (let i = 0; i < this._numBoxes; i++) {
-      this._scaleTargets[i] = Math.random() * 8 + 2
-    }
+    // for (let i = 0; i < this._numBoxes; i++) {
+    //   this._scaleTargets[i] = Math.random() * 8 + 2
+    // }
 
     this._screenData = null
 
@@ -191,13 +193,13 @@ export default class CubeView {
     this._mesh.customFrontFaceUniforms = frontMaterialUniforms
 
     for (let i = 0; i < this._numBoxes; i++) {
-      this._mesh.setColorAt(i, new THREE.Color(0xEEEEEE).setScalar(0.75 + Math.random() * 0.2))
+      this._mesh.setColorAt(i, new THREE.Color(0xEEEEEE).setScalar(0.82 + Math.random() * 0.18))
     }
 
-    eventEmitter.on('loaded-textures', this._onLoadedTextures.bind(this))
-    eventEmitter.on('transitioning', this._onTransition.bind(this))
-    eventEmitter.on('transitioning-start', this._onTransitionStart.bind(this))
-    eventEmitter.on('transitioning-end', this._onTransitionEnd.bind(this))
+    document.addEventListener('loaded-textures', this._onLoadedTextures.bind(this))
+    document.addEventListener('transitioning', this._onTransition.bind(this))
+    document.addEventListener('transitioning-start', this._onTransitionStart.bind(this))
+    document.addEventListener('transitioning-end', this._onTransitionEnd.bind(this))
   }
   get mesh () {
     return this._mesh
@@ -224,15 +226,10 @@ export default class CubeView {
   }
 
   set interactable (interactable) {
-    if (!interactable) {
-      for (let i = 0; i < this._numBoxes; i++) {
-        this._scaleTargets[i] = Math.random() * 10
-      }
-    }
     this._interactable = interactable
   }
 
-  _onLoadedTextures (imageEntries) {
+  _onLoadedTextures ({ detail: { imageEntries } }) {
     this._mesh.customFrontFaceUniforms.textures.value = [
       this._textureManager.getTexture(TEXTURE_LABEL_ATLAS).texture,
       ...imageEntries.map(entry => this._textureManager.getTexture(entry.src).texture)
@@ -240,23 +237,22 @@ export default class CubeView {
     this._mesh.customFrontFaceUniforms.textures.needsUpdate = true
   }
 
-  _onTransitionStart (direction) {
+  _onTransitionStart ({ detail: { direction } }) {
     this._transitioning = true
-    for (let i = 0; i < this._transitioningScaleTargets.length; i++) {
-      this._transitioningScaleTargets[i] = Math.random() * 10 + 2
-    }
-    if (!this._mesh.visible) {
-      let lookAtVec
-      if (direction === 0) {
-        lookAtVec = new THREE.Vector3(-100, 0, 0)
-      } else if (direction === 1) {
-        lookAtVec = new THREE.Vector3(100, 0, 0)
-      } else if (direction === 2) {
-        lookAtVec = new THREE.Vector3(0, 100, 0)
-      } else if (direction === 3) {
-        lookAtVec = new THREE.Vector3(0, -100, 0)
-      }
-      this._mesh.lookAt(lookAtVec)
+    
+    if (this.mesh.visible) {
+      
+      // let lookAtVec
+      // if (direction === 0) {
+      //   lookAtVec = new THREE.Vector3(-100, 0, 0)
+      // } else if (direction === 1) {
+      //   lookAtVec = new THREE.Vector3(100, 0, 0)
+      // } else if (direction === 2) {
+      //   lookAtVec = new THREE.Vector3(0, 100, 0)
+      // } else if (direction === 3) {
+      //   lookAtVec = new THREE.Vector3(0, -100, 0)
+      // }
+      // this._mesh.lookAt(lookAtVec)
     }
   }
 
@@ -264,7 +260,7 @@ export default class CubeView {
     this._transitioning = false
   }
 
-  _onTransition (v) {
+  _onTransition ({ detail: { v } }) {
     // const float pi = 3.14;
     // const float frequency = 10; // Frequency in Hz
     // return 0.5*(1+sin(2 * pi * frequency * time));
@@ -274,9 +270,9 @@ export default class CubeView {
       sinTheta = 0
     }
 
-    for (let i = 0; i < this._numBoxes; i++) {
-      this._scaleTargets[i] = 1 + sinTheta * this._transitioningScaleTargets[i]
-    }
+    // for (let i = 0; i < this._numBoxes; i++) {
+    //   this._scaleTargets[i] = v
+    // }
   }
   
   drawScreen (viewName, screenData) {
@@ -319,7 +315,7 @@ export default class CubeView {
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
-          const color = keyValue[1].color || [0.1, 0.1, 0.1]
+          const color = keyValue[1].color || DEFAULT_COLOR
           const entry = {
             value: key[n], type, fontSize: keyValue[1].fontSize
           }
@@ -338,7 +334,7 @@ export default class CubeView {
         }
         this._mesh.geometry.attributes.textColor.needsUpdate = true
       } else if (type === ENTRY_TYPE_WORD_LINE) {
-        const color = (style ? style.color : keyValue[1].color) || [0.1, 0.1, 0.1]
+        const color = (style ? style.color : keyValue[1].color) || DEFAULT_COLOR
         const textureXOffset = style ? style.textureXOffset : keyValue[1].textureXOffset
         const fontSize = style ? style.fontSize : keyValue[1].fontSize
         
@@ -388,14 +384,14 @@ export default class CubeView {
       const xIdx = i % this._radius
       const yIdx = (i - xIdx) / this._radius
       if (viewName === 'INFO') {
-        if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
-          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
-          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
-          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
-        } else if (i > 20 && i < 80) {
-          // this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
-          // this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
-        }
+        // if (xIdx === 0 || xIdx === this._radius - 1 || yIdx === 0 || yIdx === this._radius - 1) {
+        //   this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
+        //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+        //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        // } else if (i > 20 && i < 80) {
+        //   // this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+        //   // this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        // }
       } else {
         const hasDecoration = screenData.entries['BORDER_DEFINITION'] && screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
         console.log(hasDecoration)
