@@ -7,9 +7,11 @@ import screens from './screens.json'
 const OrbitControls = OrbitControlsA(THREE)
 
 import store from './store'
-import TextureManager from './TextureManager'
-import LoadManager from './LoadManager'
+
 import CubeView from './CubeView'
+
+import TextureManager from './managers/TextureManager'
+import LoadManager from './managers/LoadManager'
 
 import {
   setDebugMode
@@ -31,6 +33,7 @@ import eventEmitter from './event-emitter.js'
 
 const queryParams = new URLSearchParams(window.location.search)
 const isDebugMode = queryParams.has('debugMode')
+// const isDebugMode = true
 store.dispatch(setDebugMode(isDebugMode))
 
 let viewportWidth
@@ -43,7 +46,9 @@ const domLoadIndicator = document.getElementById('load-indicator')
 const mouse = new THREE.Vector2(-100, -100)
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 50)
-const renderer = new THREE.WebGLRenderer({ antialias: true })
+const renderer = new THREE.WebGLRenderer({
+  // antialias: true
+})
 const raycaster = new THREE.Raycaster()
 const clock = new THREE.Clock()
 const container = new THREE.Object3D()
@@ -87,8 +92,11 @@ const light2 = new THREE.AmbientLight( 0xFFFFFF )
 scene.add( light2 )
 
 var light = new THREE.PointLight(0xffffff, 1);
-light.decay = 2
-light.position.set(10, 30, 60)
+// light.decay = 2
+light.position.set(
+  Math.random() > 0.5 ? 10 : -10,
+  80,
+  60)
 light.castShadow = true; // default false
 light.shadow.mapSize.width = maxTextureSize
 light.shadow.mapSize.height = maxTextureSize
@@ -203,29 +211,45 @@ function onMouseClick (e) {
   document.title = `${hoverEntryName.linksTo.substring(0, 1)}${hoverEntryName.linksTo.substring(1).toLowerCase()} - Georgi Nikolov`
   
   const pathname = screens[hoverEntryName.linksTo].url
-  window.history.pushState({}, pathname, `${window.location.origin}${pathname}`)
+  const queryParams = new URLSearchParams(window.location.search)
+  window.history.pushState({}, pathname, `${window.location.origin}${pathname}?${queryParams.toString()}`)
   onNavigation(hoverEntryName.linksTo, screens[hoverEntryName.linksTo])
 }
 
+let angle = 0
+
+let y = 0
 function onNavigation (to) {
+  // console.log(to)
   viewB.drawScreen(to, screens[to])
 
   let hasSwitchedSides = false
 
-  const direction = Math.floor(Math.random() * 4)
+  const direction = Math.floor(Math.random() * 2)
 
-  const oldRotation = container.rotation.clone()
-  const newRotation = new THREE.Vector3()
+  // const direction = 2
 
   if (direction === 0) {
-    newRotation.y -= Math.PI / 2
+    y = 1
+    angle += Math.PI / 2
   } else if (direction === 1) {
-    newRotation.y += Math.PI / 2
-  } else if (direction === 2) {
-    newRotation.x += Math.PI / 2
-  } else if (direction === 3) {
-    newRotation.x -= Math.PI / 2
+    y = -1
+    angle += Math.PI / 2
   }
+  
+  const currentQuaternion = container.quaternion.clone()
+  const targetQuaternion = container.quaternion.clone().setFromAxisAngle(new THREE.Vector3(0, y, 0), angle)
+  
+
+  // if (direction === 0) {
+  //   newRotation.y -= Math.PI / 2
+  // } else if (direction === 1) {
+  //   newRotation.y += Math.PI / 2
+  // } else if (direction === 2) {
+  //   newRotation.x += Math.PI / 2
+  // } else if (direction === 3) {
+  //   newRotation.x -= Math.PI / 2
+  // }
 
 
   // const newRotation = new THREE.Vector3(
@@ -238,15 +262,19 @@ function onNavigation (to) {
 
   eventEmitter.emit('transitioning-start', direction)
   viewB.visible = true
+  viewB.interactable = true
+  
+//   viewA.visible = false
+//   viewA.interactable = false
+//   viewA.rotation.x = Math.PI
 // return
   popmotion.animate({
     duration: 1000,
     ease: popmotion.easeOut,
     onUpdate: v => {
       eventEmitter.emit('transitioning', v)
-      container.rotation.x = oldRotation.x + (newRotation.x - oldRotation.x) * v
-      container.rotation.y = oldRotation.y + (newRotation.y - oldRotation.y) * v
-      container.rotation.z = oldRotation.z + (newRotation.z - oldRotation.z) * v
+      currentQuaternion.slerp(targetQuaternion, v)
+      // container.setRotationFromQuaternion(currentQuaternion)
       if (v > 0.5 && !hasSwitchedSides) {
         hasSwitchedSides = true
       }
@@ -268,8 +296,8 @@ function onMouseMove (e) {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1
   mouse.y = - (e.clientY / window.innerHeight) * 2 + 1
 
-  cameraPosTarget.x = mouse.x * 4
-  cameraPosTarget.y = mouse.y * 4
+  cameraPosTarget.x = mouse.x * 5
+  cameraPosTarget.y = mouse.y * 5
 }
 
 function updateFrame (ts = 0) {
