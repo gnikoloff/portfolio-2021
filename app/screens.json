@@ -5,38 +5,45 @@
       "GEORGI NIKOLOV": {
         "x": 3,
         "y": 3,
-        "type": "INDIVIDUAL_CHAR"
+        "type": "INDIVIDUAL_CHAR",
+        "color": [0, 0, 0]
       },
       "Personal Website": {
-        "x": 6,
+        "x": 7,
         "y": 5,
         "type": "WORD_LINE",
-        "fontSize": 150,
+        "fontSize": 120,
         "textureXOffset": 0
       },
       "PROJECTS": {
         "x": 6,
-        "y": 8,
+        "y": 9,
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "PROJECTS"
       },
       "INFO": {
         "x": 8,
-        "y": 10,
+        "y": 11,
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "INFO"
       },
       "SOCIAL": {
         "x": 7,
-        "y": 12,
+        "y": 13,
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "SOCIAL"
       },
       "ARCHIVES": {
         "x": 6,
-        "y": 14,
+        "y": 15,
         "type": "INDIVIDUAL_CHAR",
         "linksTo": "SOCIAL"
+      },
+      "BORDER_DEFINITION": {
+        "indices": [
+          265, 266, 267, 268, 269, 270, 271, 272, 273, 274,
+          65, 66, 67, 68, 69, 70, 71, 72, 73, 74
+        ]
       }
     }
   },
@@ -65,7 +72,7 @@
         "x": 1,
         "y": 7
       },
-      "Delight MetaView": {
+      "Delight Player MetaView": {
         "id": "ordered-list-item",
         "x": 3,
         "y": 7,

@@ -2,12 +2,12 @@
   "ordered-list-index": {
     "type": "WORD_LINE",
     "textureXOffset": 0.3,
-    // "fontSize": 150,
+    "fontSize": 150,
     "color": [0.3, 0.3, 0.3]
   },
   "ordered-list-item": {
     "textureXOffset": 0.3,
-    // "fontSize": 150,
+    "fontSize": 124,
     "type": "WORD_LINE"
   }
 }
