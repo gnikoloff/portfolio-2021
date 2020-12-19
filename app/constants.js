@@ -18,3 +18,8 @@ export const RESOURCE_FONT = 'FONT'
 export const FONT_NAME = 'Cousine'
 
 export const TEXTURE_LABEL_ATLAS = 'TEXTURE_LABEL_ATLAS'
+
+export const EVT_LOADED_TEXTURES = 'loaded-textures'
+export const EVT_TRANSITIONING = 'transitioning'
+export const EVT_TRANSITIONING_START = 'transitioning-start'
+export const EVT_TRANSITIONING_END = 'transitioning-end'

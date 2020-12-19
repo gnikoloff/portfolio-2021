@@ -19,6 +19,11 @@ import {
   VIEW_HOME,
   ENTRY_TYPE_SYMBOL_DOT,
   TEXTURE_LABEL_ATLAS,
+
+  EVT_LOADED_TEXTURES,
+  EVT_TRANSITIONING,
+  EVT_TRANSITIONING_START,
+  EVT_TRANSITIONING_END,
 } from './constants'
 
 import styles from './label-styles.json'
@@ -196,10 +201,10 @@ export default class CubeView {
       this._mesh.setColorAt(i, new THREE.Color(0xEEEEEE).setScalar(0.82 + Math.random() * 0.18))
     }
 
-    document.addEventListener('loaded-textures', this._onLoadedTextures.bind(this))
-    document.addEventListener('transitioning', this._onTransition.bind(this))
-    document.addEventListener('transitioning-start', this._onTransitionStart.bind(this))
-    document.addEventListener('transitioning-end', this._onTransitionEnd.bind(this))
+    document.addEventListener(EVT_LOADED_TEXTURES, this._onLoadedTextures.bind(this))
+    document.addEventListener(EVT_TRANSITIONING, this._onTransition.bind(this))
+    document.addEventListener(EVT_TRANSITIONING_START, this._onTransitionStart.bind(this))
+    document.addEventListener(EVT_TRANSITIONING_END, this._onTransitionEnd.bind(this))
   }
   get mesh () {
     return this._mesh

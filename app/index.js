@@ -27,6 +27,11 @@ import {
   RESOURCE_FONT,
   FONT_NAME,
   MAX_VIEWPORT_WIDTH,
+
+  EVT_LOADED_TEXTURES,
+  EVT_TRANSITIONING,
+  EVT_TRANSITIONING_START,
+  EVT_TRANSITIONING_END,
 } from './constants'
 
 import eventEmitter from './event-emitter.js'
@@ -160,7 +165,7 @@ function onLoadResources (allResources) {
   const imageEntries = allResources.filter(({ type }) => type === ENTRY_TYPE_IMAGE)
   imageEntries.forEach(image => texManager.addAtlasEntry(image, image.src))
 
-  document.dispatchEvent(new CustomEvent('loaded-textures', { detail: { imageEntries } }))
+  document.dispatchEvent(new CustomEvent(EVT_LOADED_TEXTURES, { detail: { imageEntries } }))
 
   viewA.interactable = true
   viewA.visible = true
@@ -260,7 +265,7 @@ function onNavigation (to) {
 
   viewA.interactable = false
 
-  document.dispatchEvent(new CustomEvent('transitioning-start', { detail: { direction } }))
+  document.dispatchEvent(new CustomEvent(EVT_TRANSITIONING_START, { detail: { direction } }))
   viewB.visible = true
   viewB.interactable = true
   
@@ -272,7 +277,7 @@ function onNavigation (to) {
     duration: 1000,
     ease: popmotion.easeOut,
     onUpdate: v => {
-      document.dispatchEvent(new CustomEvent('transitioning', { detail: { v } }))
+      document.dispatchEvent(new CustomEvent(EVT_TRANSITIONING, { detail: { v } }))
       currentQuaternion.slerp(targetQuaternion, v)
       // container.setRotationFromQuaternion(currentQuaternion)
       if (v > 0.5 && !hasSwitchedSides) {
@@ -285,7 +290,7 @@ function onNavigation (to) {
       const temp = viewB
       viewB = viewA
       viewA = temp
-      document.dispatchEvent(new CustomEvent('transitioning-end'))
+      document.dispatchEvent(new CustomEvent(EVT_TRANSITIONING_END))
     }
   })
   
