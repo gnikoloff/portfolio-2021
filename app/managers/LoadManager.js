@@ -3,16 +3,16 @@ import WebFont from 'webfontloader'
 import {
   RESOURCE_IMAGE,
   RESOURCE_FONT
-} from './constants'
+} from '../constants'
 
 import {
   loadImage
-} from './helpers'
+} from '../helpers'
 
 import store from './store'
 import {
   setLoadProgress
-} from './store/actions'
+} from '../store/actions'
 
 let instance
 
@@ -49,11 +49,11 @@ export default class LoadManager {
         } else if (resource.type === RESOURCE_FONT) {
           return new Promise((resolve, reject) => {
             const { isDebugMode } = store.getState()
-            if (isDebugMode) {
-              loadedProgress += step
-              store.dispatch(setLoadProgress(loadedProgress))
-              return resolve(resource)
-            }
+            // if (isDebugMode) {
+            //   loadedProgress += step
+            //   store.dispatch(setLoadProgress(loadedProgress))
+            //   return resolve(resource)
+            // }
             WebFont.load({
               google: { families: [resource.fontName] },
               text: resource.text,

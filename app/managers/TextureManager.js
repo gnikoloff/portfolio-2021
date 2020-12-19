@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-import store from './store'
+import store from '../store'
 
 import {
   ENTRY_TYPE_IMAGE,
@@ -11,7 +11,7 @@ import {
   FONT_NAME,
   TEXTURE_LABEL_ATLAS,
   ENTRY_TYPE_SYMBOL_SQUARE
-} from './constants'
+} from '../constants'
 
 let instance
 
