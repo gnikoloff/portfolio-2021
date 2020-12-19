@@ -10,6 +10,8 @@ import {
   createShaderMaterial,
 } from './helpers'
 
+import AllocationManager from './managers/AllocationManager'
+
 import {
   ENTRY_TYPE_IMAGE,
   ENTRY_TYPE_INDIVIDUAL_CHAR,
@@ -55,156 +57,184 @@ export default class CubeView {
 
     this._screenData = null
 
-    const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
-    geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5))
-
-    const { entriesPerRow, texture: charactersAtlasTexture } = this._textureManager.getTexture(TEXTURE_LABEL_ATLAS)
-    const textureSize = new THREE.Vector2(entriesPerRow, entriesPerRow)
-
-    const letterOffsets = new Float32Array(this._numBoxes * 2)
-    const textureIndices = new Float32Array(this._numBoxes)
-    const textureUvOffsets = new Float32Array(this._numBoxes * 2)
-    const instanceIndices = new Float32Array(this._numBoxes)
-    const textColors = new Float32Array(this._numBoxes * 3)
-
-    for (let i = 0; i < this._numBoxes; i++) {
-      const x = i % entriesPerRow / this._radius
-      const y = (i - x) / entriesPerRow / this._radius
-      textureUvOffsets[i * 2] = x
-      textureUvOffsets[i * 2 + 1] = y
-
-      instanceIndices[i] = i / this._numBoxes
-    }
-
-    geometry.setAttribute('textureAtlasOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
-    geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
-    geometry.setAttribute('textureUVOffset', new THREE.InstancedBufferAttribute(textureUvOffsets, 2))
-    geometry.setAttribute('instanceIdx', new THREE.InstancedBufferAttribute(instanceIndices, 1))
-    geometry.setAttribute('textColor', new THREE.InstancedBufferAttribute(textColors, 3))
-
-    const frontMaterialUniforms = {
-      textures: { value: [charactersAtlasTexture], type: 'tv' }
-    }
-
-    const frontMaterial = createShaderMaterial({
-      uniforms: frontMaterialUniforms,
-      vertexShaderSnippets: {
-        'void main() {': `
-          // uniform mat3 uvTransform;
-
-          attribute float textureIdx;
-          attribute vec2 textureUVOffset;
-          attribute vec2 textureAtlasOffset;
-          attribute vec3 textColor;
-    
-          varying float vTextureIdx;
-          varying vec2 vTextureUVOffset;
-          varying vec2 vTextureAtlasOffset;
-          varying vec3 vTextColor;
-    
-          void main () {
-            vTextureIdx = textureIdx;
-            // vUv = (uvTransform * vec3( uv, 1 )).xy;
-            vTextureUVOffset = textureUVOffset;
-            vTextureAtlasOffset = textureAtlasOffset;
-            vTextColor = textColor;
-        `
-      },
-      fragmentShaderSnippets: {
-        '#include <bumpmap_pars_fragment>': `
-          uniform sampler2D textures[4];
-
-          varying float vTextureIdx;
-          // varying vec2 vUv;
-          varying vec2 vTextureUVOffset;
-          varying vec2 vTextureAtlasOffset;
-          varying vec3 vTextColor;
-
-          #ifdef USE_BUMPMAP
-            uniform sampler2D bumpMap;
-            uniform float bumpScale;
-            vec2 dHdxy_fwd() {
-              vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
-              vec2 dSTdx = dFdx( transformedUV );
-              vec2 dSTdy = dFdy( transformedUV );
-              float Hll = bumpScale * texture2D( bumpMap, transformedUV ).x;
-              float dBx = bumpScale * texture2D( bumpMap, transformedUV + dSTdx ).x - Hll;
-              float dBy = bumpScale * texture2D( bumpMap, transformedUV + dSTdy ).x - Hll;
-              return vec2( dBx, dBy );
-            }
-            vec3 perturbNormalArb( vec3 surf_pos, vec3 surf_norm, vec2 dHdxy ) {
-              vec3 vSigmaX = vec3( dFdx( surf_pos.x ), dFdx( surf_pos.y ), dFdx( surf_pos.z ) );
-              vec3 vSigmaY = vec3( dFdy( surf_pos.x ), dFdy( surf_pos.y ), dFdy( surf_pos.z ) );
-              vec3 vN = surf_norm;
-              vec3 R1 = cross( vSigmaY, vN );
-              vec3 R2 = cross( vN, vSigmaX );
-              float fDet = dot( vSigmaX, R1 );
-              fDet *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-              vec3 vGrad = sign( fDet ) * ( dHdxy.x * R1 + dHdxy.y * R2 );
-              return normalize( abs( fDet ) * surf_norm - vGrad );
-            }
-          #endif
-        `,
-        '#include <color_fragment>': `
-            diffuseColor.rgb *= vColor;
-
-            vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
-
-            vec4 typeColor = vec4(vTextColor, 1.0);
-
-            vec4 texelColor = texture2D(textures[0], transformedUV);
-            if (vTextureIdx < 1.0) {
-              
-              diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
-            } else if (vTextureIdx < 2.0) {
-              texelColor = texture2D(textures[1], transformedUV);
-              diffuseColor = texelColor;
-            } else if (vTextureIdx < 3.0) {
-              texelColor = texture2D(textures[2], transformedUV);
-              diffuseColor = texelColor;
-            } else if (vTextureIdx < 4.0) {
-              texelColor = texture2D(textures[3], transformedUV);
-              diffuseColor = texelColor;
-            }
-      
-            // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
-            // diffuseColor.rgb *= texture2D(texture, vUv);
-      
-        `
-      }
-    })
-    frontMaterial.bumpMap = charactersAtlasTexture
-    frontMaterial.needsUpdate = true
-
-    const sideMaterial = createShaderMaterial()
-
-    const materials = [
-      sideMaterial,
-      sideMaterial,
-      sideMaterial,
-      sideMaterial,
-      frontMaterial,
-      sideMaterial,
-    ]
-    
-
-    // const materials = frontMaterial
-
-    this._mesh = new THREE.InstancedMesh(geometry, materials, this._numBoxes)
-    this._mesh.castShadow = true
-    this._mesh.receiveShadow = true
-    this._mesh.visible = false
-    this._mesh.customFrontFaceUniforms = frontMaterialUniforms
-
-    for (let i = 0; i < this._numBoxes; i++) {
-      this._mesh.setColorAt(i, new THREE.Color(0xEEEEEE).setScalar(0.82 + Math.random() * 0.18))
-    }
-
     document.addEventListener(EVT_LOADED_TEXTURES, this._onLoadedTextures.bind(this))
     document.addEventListener(EVT_TRANSITIONING, this._onTransition.bind(this))
     document.addEventListener(EVT_TRANSITIONING_START, this._onTransitionStart.bind(this))
     document.addEventListener(EVT_TRANSITIONING_END, this._onTransitionEnd.bind(this))
   }
+  init = () => new Promise(resolve => {
+    let frontMaterial
+    let sideMaterial
+
+    const { entriesPerRow, texture: charactersAtlasTexture } = this._textureManager.getTexture(TEXTURE_LABEL_ATLAS)
+
+    const frontMaterialUniforms = {
+      textures: { value: [charactersAtlasTexture], type: 'tv' }
+    }
+
+    const createMesh = () => {
+      const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
+      geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5))
+
+      const { entriesPerRow } = this._textureManager.getTexture(TEXTURE_LABEL_ATLAS)
+
+      const letterOffsets = new Float32Array(this._numBoxes * 2)
+      const textureIndices = new Float32Array(this._numBoxes)
+      const textureUvOffsets = new Float32Array(this._numBoxes * 2)
+      const instanceIndices = new Float32Array(this._numBoxes)
+      const textColors = new Float32Array(this._numBoxes * 3)
+
+      for (let i = 0; i < this._numBoxes; i++) {
+        const x = i % entriesPerRow / this._radius
+        const y = (i - x) / entriesPerRow / this._radius
+        textureUvOffsets[i * 2] = x
+        textureUvOffsets[i * 2 + 1] = y
+
+        instanceIndices[i] = i / this._numBoxes
+      }
+
+      geometry.setAttribute('textureAtlasOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
+      geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
+      geometry.setAttribute('textureUVOffset', new THREE.InstancedBufferAttribute(textureUvOffsets, 2))
+      geometry.setAttribute('instanceIdx', new THREE.InstancedBufferAttribute(instanceIndices, 1))
+      geometry.setAttribute('textColor', new THREE.InstancedBufferAttribute(textColors, 3))
+      
+      const materials = [
+        sideMaterial,
+        sideMaterial,
+        sideMaterial,
+        sideMaterial,
+        frontMaterial,
+        sideMaterial,
+      ]
+
+      this._mesh = new THREE.InstancedMesh(geometry, materials, this._numBoxes)
+      this._mesh.castShadow = true
+      this._mesh.receiveShadow = true
+      this._mesh.visible = false
+      this._mesh.customFrontFaceUniforms = frontMaterialUniforms
+
+      for (let i = 0; i < this._numBoxes; i++) {
+        this._mesh.setColorAt(i, new THREE.Color(0xEEEEEE).setScalar(0.82 + Math.random() * 0.18))
+      }
+
+      resolve(this._mesh)
+    }
+
+    const allocManager = AllocationManager.getInstance()
+
+    allocManager
+      .allocate(() => {
+        const material = createShaderMaterial({
+          uniforms: frontMaterialUniforms,
+          vertexShaderSnippets: {
+            'void main() {': `
+              // uniform mat3 uvTransform;
+
+              attribute float textureIdx;
+              attribute vec2 textureUVOffset;
+              attribute vec2 textureAtlasOffset;
+              attribute vec3 textColor;
+        
+              varying float vTextureIdx;
+              varying vec2 vTextureUVOffset;
+              varying vec2 vTextureAtlasOffset;
+              varying vec3 vTextColor;
+        
+              void main () {
+                vTextureIdx = textureIdx;
+                // vUv = (uvTransform * vec3( uv, 1 )).xy;
+                vTextureUVOffset = textureUVOffset;
+                vTextureAtlasOffset = textureAtlasOffset;
+                vTextColor = textColor;
+            `
+          },
+          fragmentShaderSnippets: {
+            '#include <bumpmap_pars_fragment>': `
+              uniform sampler2D textures[4];
+
+              varying float vTextureIdx;
+              // varying vec2 vUv;
+              varying vec2 vTextureUVOffset;
+              varying vec2 vTextureAtlasOffset;
+              varying vec3 vTextColor;
+
+              #ifdef USE_BUMPMAP
+                uniform sampler2D bumpMap;
+                uniform float bumpScale;
+                vec2 dHdxy_fwd() {
+                  vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
+                  vec2 dSTdx = dFdx( transformedUV );
+                  vec2 dSTdy = dFdy( transformedUV );
+                  float Hll = bumpScale * texture2D( bumpMap, transformedUV ).x;
+                  float dBx = bumpScale * texture2D( bumpMap, transformedUV + dSTdx ).x - Hll;
+                  float dBy = bumpScale * texture2D( bumpMap, transformedUV + dSTdy ).x - Hll;
+                  return vec2( dBx, dBy );
+                }
+                vec3 perturbNormalArb( vec3 surf_pos, vec3 surf_norm, vec2 dHdxy ) {
+                  vec3 vSigmaX = vec3( dFdx( surf_pos.x ), dFdx( surf_pos.y ), dFdx( surf_pos.z ) );
+                  vec3 vSigmaY = vec3( dFdy( surf_pos.x ), dFdy( surf_pos.y ), dFdy( surf_pos.z ) );
+                  vec3 vN = surf_norm;
+                  vec3 R1 = cross( vSigmaY, vN );
+                  vec3 R2 = cross( vN, vSigmaX );
+                  float fDet = dot( vSigmaX, R1 );
+                  fDet *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
+                  vec3 vGrad = sign( fDet ) * ( dHdxy.x * R1 + dHdxy.y * R2 );
+                  return normalize( abs( fDet ) * surf_norm - vGrad );
+                }
+              #endif
+            `,
+            '#include <color_fragment>': `
+                diffuseColor.rgb *= vColor;
+
+                vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
+
+                vec4 typeColor = vec4(vTextColor, 1.0);
+
+                vec4 texelColor = texture2D(textures[0], transformedUV);
+                if (vTextureIdx < 1.0) {
+                  
+                  diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
+                } else if (vTextureIdx < 2.0) {
+                  texelColor = texture2D(textures[1], transformedUV);
+                  diffuseColor = texelColor;
+                } else if (vTextureIdx < 3.0) {
+                  texelColor = texture2D(textures[2], transformedUV);
+                  diffuseColor = texelColor;
+                } else if (vTextureIdx < 4.0) {
+                  texelColor = texture2D(textures[3], transformedUV);
+                  diffuseColor = texelColor;
+                }
+          
+                // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
+                // diffuseColor.rgb *= texture2D(texture, vUv);
+          
+            `
+          }
+        })
+        material.bumpMap = charactersAtlasTexture
+        material.needsUpdate = true
+        return material
+      })
+      .then((material) => {
+        frontMaterial = material
+        if (sideMaterial) {
+          createMesh()
+        }
+      })
+
+    allocManager
+      .allocate(() => {
+        const material = createShaderMaterial()
+        return material
+      })
+      .then((material) => {
+        sideMaterial = material
+        if (frontMaterial) {
+          createMesh()
+        }
+      })
+  })
   get mesh () {
     return this._mesh
   }
@@ -398,7 +428,6 @@ export default class CubeView {
         // }
       } else {
         const hasDecoration = screenData.entries['BORDER_DEFINITION'] && screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
-        console.log(hasDecoration)
         if (hasDecoration) {
           this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
@@ -422,6 +451,9 @@ export default class CubeView {
     dt,
     raycaster,
   }) {
+    if (!this._mesh) {
+      return null
+    }
     const intersection = raycaster.intersectObject(this._mesh)
 
     let instanceId

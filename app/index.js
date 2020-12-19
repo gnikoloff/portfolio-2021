@@ -57,9 +57,11 @@ const cameraPosTarget = new THREE.Vector3()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 // const maxTextureSize = 1024
+
 const texManager = new TextureManager({ size: maxTextureSize })
 const loadManager = new LoadManager()
-const allocationManager  = new AllocationManager()
+
+new AllocationManager()
 
 let viewportWidth
 let viewportHeight
@@ -130,14 +132,22 @@ let viewB = new CubeView({
   textureManager: texManager,
 })
 
-container.add(viewA.mesh)
-container.add(viewB.mesh)
-
 document.addEventListener('DOMContentLoaded', init)
 
 function init () {
-  loadManager.loadResources().then(onLoadResources)
+  Promise.all([
+    viewA.init(),
+    viewB.init(),
+    loadManager.loadResources()
+  ]).then((result) => {
+    const viewAMesh = result[0]
+    const viewBMesh = result[1]
+    const allLoadResources = result[2]
 
+    container.add(viewAMesh)
+    container.add(viewBMesh)
+    onLoadResources(allLoadResources)
+  })
   if (isDebugMode) {
     new OrbitControls(camera, domContainer)
   }
