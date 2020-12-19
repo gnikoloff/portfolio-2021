@@ -63,6 +63,7 @@ const loadManager = new LoadManager()
 
 new AllocationManager()
 
+let ambientLight
 let viewportWidth
 let viewportHeight
 let dpr = window.devicePixelRatio
@@ -70,44 +71,12 @@ let loadProgress = 0
 
 // store.dispatch(setDebugMode(isDebugMode))
 
-Object.values(screens).reduce((acc, value) => {
-  Object.values(value.entries).forEach(entry => {
-    if (entry.type === RESOURCE_IMAGE) {
-      acc.push(entry)
-      const { src } = entry
-      document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: { type: ENTRY_TYPE_IMAGE, src } }))
-      document.dispatchEvent(new CustomEvent(EVT_ALLOCATE_TEXTURE, { detail: { textureId: src, size: 512 } }))
-    }
-  })
-  return acc
-}, [])
-
 document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: {
   type: RESOURCE_FONT,
   fontName: `${FONT_NAME}:400:latin`,
   // Load only font chars we actually use
   text: getAllUsedCharactersString()
 } }))
-
-const light2 = new THREE.AmbientLight( 0xFFFFFF )
-scene.add( light2 )
-
-var light = new THREE.PointLight(0xffffff, 1);
-// light.decay = 2
-light.position.set(
-  Math.random() > 0.5 ? 10 : -10,
-  80,
-  60)
-light.castShadow = true; // default false
-light.shadow.mapSize.width = maxTextureSize
-light.shadow.mapSize.height = maxTextureSize
-// light.shadow.camera.left = -20;
-// light.shadow.camera.right = 20;
-// light.shadow.camera.top = 20;
-// light.shadow.camera.bottom = -20;
-// light.shadow.camera.near = 0.5;
-// light.shadow.camera.far = 4000
-scene.add(light)
 
 renderer.shadowMap.enabled = true
 renderer.shadowMap.needsUpdate = true
@@ -138,14 +107,23 @@ function init () {
   Promise.all([
     viewA.init(),
     viewB.init(),
-    loadManager.loadResources()
+    loadManager.loadResources(),
+    makeAmbientLight(),
+    makePointLight(),
+    allocateProjectImages()
   ]).then((result) => {
     const viewAMesh = result[0]
     const viewBMesh = result[1]
     const allLoadResources = result[2]
+    const ambientLight = result[3]
+    const pointLight = result[4]
 
     container.add(viewAMesh)
     container.add(viewBMesh)
+
+    scene.add(ambientLight)
+    scene.add(pointLight)
+
     onLoadResources(allLoadResources)
   })
   if (isDebugMode) {
@@ -335,4 +313,40 @@ function updateFrame (ts = 0) {
   renderer.render( scene, camera )
 
   requestAnimationFrame(updateFrame)
+}
+
+function makeAmbientLight () {
+  return AllocationManager
+    .getInstance()
+    .allocate(() => {
+      ambientLight = new THREE.AmbientLight(0xFFFFFF)
+      return ambientLight
+    })
+}
+
+function makePointLight () {
+  return AllocationManager
+    .getInstance()
+    .allocate(() => {
+      const pointLight = new THREE.PointLight(0xffffff, 1)
+      pointLight.position.set(Math.random() > 0.5 ? 10 : -10, 80, 60)
+      pointLight.castShadow = true
+      pointLight.shadow.mapSize.width = maxTextureSize / 2
+      pointLight.shadow.mapSize.height = maxTextureSize / 2
+      return pointLight
+    }, 1000)
+}
+
+function allocateProjectImages () {
+  return Object.values(screens).map((value) => {
+    return Object.values(value.entries).filter(entry => entry.type === RESOURCE_IMAGE).map(entry => {
+      const { src } = entry
+      document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: { type: ENTRY_TYPE_IMAGE, src } }))
+      return AllocationManager
+        .getInstance()
+        .allocate(() => {
+          document.dispatchEvent(new CustomEvent(EVT_ALLOCATE_TEXTURE, { detail: { textureId: src, size: 512 } }))
+        })
+    })
+  }).flat()
 }
