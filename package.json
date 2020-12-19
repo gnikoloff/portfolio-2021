@@ -26,7 +26,6 @@
     "parcel": "^1.12.4"
   },
   "dependencies": {
-    "event": "^1.0.0",
     "express": "^4.17.1",
     "popmotion": "^9.0.0",
     "redux": "^4.0.5",
