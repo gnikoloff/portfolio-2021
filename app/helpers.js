@@ -6,6 +6,17 @@ import {
 
 import screens from './screens.json'
 
+export const getAllUsedCharactersString = () => Object.entries(screens).reduce((acc, [key, value]) => {
+  const appendChar = char => {
+    if (!acc.includes(char)) {
+      acc += char
+    }
+  }
+  key.split('').forEach(appendChar)
+  Object.keys(value.entries).forEach(key => key.split('').forEach(appendChar))
+  return acc
+}, '')
+
 export const loadImage = ({ src }) => new Promise((resolve, reject) => {
   const image = new Image()
   image.onload = () => resolve(image)
