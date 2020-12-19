@@ -1,7 +1,5 @@
 import * as THREE from 'three'
 
-import TextureManager from './managers/TextureManager'
-import eventEmitter from './event-emitter'
 import store from './store'
 
 import {
@@ -36,8 +34,9 @@ const styleMap = new Map(Object.entries(styles))
 export default class CubeView {
   constructor ({
     radius,
+    textureManager,
   }) {
-    this._textureManager = TextureManager.getInstance()
+    this._textureManager = textureManager
     this._radius = radius
     this._numBoxes = radius * radius
     this._interactable = false

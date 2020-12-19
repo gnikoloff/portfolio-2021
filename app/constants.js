@@ -19,7 +19,9 @@ export const FONT_NAME = 'Cousine'
 
 export const TEXTURE_LABEL_ATLAS = 'TEXTURE_LABEL_ATLAS'
 
-export const EVT_LOADED_TEXTURES = 'loaded-textures'
-export const EVT_TRANSITIONING = 'transitioning'
-export const EVT_TRANSITIONING_START = 'transitioning-start'
-export const EVT_TRANSITIONING_END = 'transitioning-end'
+export const EVT_ADD_TO_LOAD_QUEUE = 'EVT_ADD_TO_LOAD_QUEUE'
+export const EVT_ALLOCATE_TEXTURE = 'EVT_ALLOCATE_TEXTURE'
+export const EVT_LOADED_TEXTURES = 'EVT_LOADED_TEXTURES'
+export const EVT_TRANSITIONING = 'EVT_TRANSITIONING'
+export const EVT_TRANSITIONING_START = 'EVT_TRANSITIONING_START'
+export const EVT_TRANSITIONING_END = 'EVT_TRANSITIONING_END'

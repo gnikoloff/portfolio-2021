@@ -12,13 +12,15 @@ import CubeView from './CubeView'
 
 import TextureManager from './managers/TextureManager'
 import LoadManager from './managers/LoadManager'
+import AllocationManager from './managers/AllocationManager'
 
 import {
-  setDebugMode
+  setDebugMode,
 } from './store/actions'
 
 import {
-  extractViewFromURL
+  getAllUsedCharactersString,
+  extractViewFromURL,
 } from './helpers'
 
 import {
@@ -32,19 +34,12 @@ import {
   EVT_TRANSITIONING,
   EVT_TRANSITIONING_START,
   EVT_TRANSITIONING_END,
+  EVT_ADD_TO_LOAD_QUEUE,
+  EVT_ALLOCATE_TEXTURE,
 } from './constants'
-
-import eventEmitter from './event-emitter.js'
 
 const queryParams = new URLSearchParams(window.location.search)
 const isDebugMode = queryParams.has('debugMode')
-// const isDebugMode = true
-store.dispatch(setDebugMode(isDebugMode))
-
-let viewportWidth
-let viewportHeight
-let dpr = window.devicePixelRatio
-let loadProgress = 0
 
 const domContainer = document.getElementById('app-container')
 const domLoadIndicator = document.getElementById('load-indicator')
@@ -62,36 +57,35 @@ const cameraPosTarget = new THREE.Vector3()
 
 const maxTextureSize = Math.min(4096, renderer.capabilities.maxTextureSize)
 // const maxTextureSize = 1024
-const texManager = TextureManager.init({ size: maxTextureSize })
+const texManager = new TextureManager({ size: maxTextureSize })
+const loadManager = new LoadManager()
+const allocationManager  = new AllocationManager()
 
-const loadManager = LoadManager.init()
+let viewportWidth
+let viewportHeight
+let dpr = window.devicePixelRatio
+let loadProgress = 0
+
+// store.dispatch(setDebugMode(isDebugMode))
 
 Object.values(screens).reduce((acc, value) => {
   Object.values(value.entries).forEach(entry => {
     if (entry.type === RESOURCE_IMAGE) {
       acc.push(entry)
       const { src } = entry
-      loadManager.addResourceToLoad({ type: ENTRY_TYPE_IMAGE, src })
-      texManager.allocateTexture({ textureId: src, size: 512 })
+      document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: { type: ENTRY_TYPE_IMAGE, src } }))
+      document.dispatchEvent(new CustomEvent(EVT_ALLOCATE_TEXTURE, { detail: { textureId: src, size: 512 } }))
     }
   })
   return acc
 }, [])
 
-loadManager.addResourceToLoad({
+document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: {
   type: RESOURCE_FONT,
   fontName: `${FONT_NAME}:400:latin`,
-  text: Object.entries(screens).reduce((acc, [key, value]) => {
-    const appendChar = char => {
-      if (!acc.includes(char)) {
-        acc += char
-      }
-    }
-    key.split('').forEach(appendChar)
-    Object.keys(value.entries).forEach(key => key.split('').forEach(appendChar))
-    return acc
-  }, '')
-})
+  // Load only font chars we actually use
+  text: getAllUsedCharactersString()
+} }))
 
 const light2 = new THREE.AmbientLight( 0xFFFFFF )
 scene.add( light2 )
@@ -128,12 +122,12 @@ scene.add(container)
 
 let viewA = new CubeView({
   radius: 20,
-  lightPosition: light.position
+  textureManager: texManager,
 })
 
 let viewB = new CubeView({
   radius: 20,
-  lightPosition: light.position
+  textureManager: texManager,
 })
 
 container.add(viewA.mesh)
@@ -175,7 +169,6 @@ function onLoadResources (allResources) {
 }
 
 function onResize () {
-
   dpr = window.devicePixelRatio
   if (window.innerWidth > MAX_VIEWPORT_WIDTH) {
     const widthDelta = (MAX_VIEWPORT_WIDTH / window.innerWidth)
@@ -200,9 +193,6 @@ function onMouseClick (e) {
   if (!hoverEntryName) {
     return
   }
-
-  console.log(hoverEntryName.linksTo)
-
   e.preventDefault()
 
   if (hoverEntryName.linksTo.includes('mailto')) {
