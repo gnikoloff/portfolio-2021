@@ -2,31 +2,26 @@ import WebFont from 'webfontloader'
 
 import {
   RESOURCE_IMAGE,
-  RESOURCE_FONT
+  RESOURCE_FONT,
+  EVT_ADD_TO_LOAD_QUEUE
 } from '../constants'
 
 import {
   loadImage
 } from '../helpers'
 
-import store from './store'
+import store from '../store'
 import {
   setLoadProgress
 } from '../store/actions'
 
-let instance
-
 export default class LoadManager {
-  static init () {
-    if (!instance) {
-      instance = new LoadManager()
-    }
-    return instance
-  }
   constructor () {
     this._resourcesToLoad = []
+
+    document.addEventListener(EVT_ADD_TO_LOAD_QUEUE, this.addResourceToLoad.bind(this))
   }
-  addResourceToLoad (entry) {
+  addResourceToLoad ({ detail: entry }) {
     this._resourcesToLoad.push(entry)
   }
   loadResources () {
@@ -69,4 +64,3 @@ export default class LoadManager {
       }))
   }
 }
-

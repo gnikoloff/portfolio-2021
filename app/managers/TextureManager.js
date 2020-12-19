@@ -10,7 +10,8 @@ import {
   ENTRY_TYPE_SYMBOL_CROSS,
   FONT_NAME,
   TEXTURE_LABEL_ATLAS,
-  ENTRY_TYPE_SYMBOL_SQUARE
+  ENTRY_TYPE_SYMBOL_SQUARE,
+  EVT_ALLOCATE_TEXTURE,
 } from '../constants'
 
 let instance
@@ -20,16 +21,7 @@ const IDEAL_TEXTURE_SIZE = 4096
 const DRAW_COLOR = 'green'
 
 export default class TextureManager {
-  static init ({ size }) {
-    if (!instance) {
-      instance = new TextureManager(size)
-    }
-    return instance
-  }
-  static getInstance () {
-    return instance
-  }
-  constructor (size) {
+  constructor ({ size }) {
     this._textureSet = new Map()
     this._size = size
 
@@ -72,6 +64,9 @@ export default class TextureManager {
     if (isDebugMode) {
       this._domDebugContainer.style.display = 'block'
     }
+
+    document.addEventListener(EVT_ALLOCATE_TEXTURE, this.allocateTexture.bind(this))
+
   }
   get entriesPerRow () {
     return entriesPerRow
@@ -96,7 +91,6 @@ export default class TextureManager {
     ctx.drawImage(entry.value, 0, cellWidth * 2)
 
     atlas.set(entry.src, texCoords)
-    // debugger
 
     ctx.restore()
 
@@ -327,7 +321,7 @@ export default class TextureManager {
     }
     return textureData
   }
-  allocateTexture ({ textureId, size }) {
+  allocateTexture ({ detail: { textureId, size } }) {
     const { canvas, ctx } = this._makeCanvas(textureId, size)
     const textureUniformIdx = this._textureSet.size
 
