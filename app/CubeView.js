@@ -81,7 +81,6 @@ export default class CubeView {
       const letterOffsets = new Float32Array(this._numBoxes * 2)
       const textureIndices = new Float32Array(this._numBoxes)
       const textureUvOffsets = new Float32Array(this._numBoxes * 2)
-      const instanceIndices = new Float32Array(this._numBoxes)
       const textColors = new Float32Array(this._numBoxes * 3)
 
       for (let i = 0; i < this._numBoxes; i++) {
@@ -89,14 +88,11 @@ export default class CubeView {
         const y = (i - x) / entriesPerRow / this._radius
         textureUvOffsets[i * 2] = x
         textureUvOffsets[i * 2 + 1] = y
-
-        instanceIndices[i] = i / this._numBoxes
       }
 
       geometry.setAttribute('textureAtlasOffset', new THREE.InstancedBufferAttribute(letterOffsets, 2))
       geometry.setAttribute('textureIdx', new THREE.InstancedBufferAttribute(textureIndices, 1))
       geometry.setAttribute('textureUVOffset', new THREE.InstancedBufferAttribute(textureUvOffsets, 2))
-      geometry.setAttribute('instanceIdx', new THREE.InstancedBufferAttribute(instanceIndices, 1))
       geometry.setAttribute('textColor', new THREE.InstancedBufferAttribute(textColors, 3))
       
       const materials = [
@@ -185,15 +181,14 @@ export default class CubeView {
               #endif
             `,
             '#include <color_fragment>': `
-                diffuseColor.rgb *= vColor;
+                // diffuseColor.rgb *= vColor;
 
                 vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureAtlasOffset;
 
                 vec4 typeColor = vec4(vTextColor, 1.0);
 
                 vec4 texelColor = texture2D(textures[0], transformedUV);
-                if (vTextureIdx < 1.0) {
-                  
+                if (vTextureIdx < 1.0) {   
                   diffuseColor = mix(diffuseColor, typeColor, texelColor.a);
                 } else if (vTextureIdx < 2.0) {
                   texelColor = texture2D(textures[1], transformedUV);
@@ -209,6 +204,10 @@ export default class CubeView {
                 // vec2 transformedUV = vUv * vec2(1.0 / ${entriesPerRow}.0) + vTextureUVOffset;
                 // diffuseColor.rgb *= texture2D(texture, vUv);
           
+            `,
+            'gl_FragColor = vec4( outgoingLight, diffuseColor.a );': `
+              gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+                // gl_FragColor = diffuseColor;
             `
           }
         })
@@ -378,7 +377,7 @@ export default class CubeView {
           y,
           type,
           textureXOffset,
-          fontSize
+          fontSize,
         }
         const {
           textureUniformIdx,
