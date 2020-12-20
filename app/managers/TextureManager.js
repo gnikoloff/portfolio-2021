@@ -14,8 +14,6 @@ import {
   EVT_ALLOCATE_TEXTURE,
 } from '../constants'
 
-let instance
-
 const IDEAL_TEXTURE_SIZE = 4096
 
 const DRAW_COLOR = 'green'
