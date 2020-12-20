@@ -6,7 +6,11 @@
         "x": 3,
         "y": 3,
         "type": "INDIVIDUAL_CHAR",
-        "color": [0, 0, 0]
+        "color": [
+          0,
+          0,
+          0
+        ]
       },
       "Personal Website": {
         "x": 7,
@@ -41,8 +45,26 @@
       },
       "BORDER_DEFINITION": {
         "indices": [
-          265, 266, 267, 268, 269, 270, 271, 272, 273, 274,
-          65, 66, 67, 68, 69, 70, 71, 72, 73, 74
+          265,
+          266,
+          267,
+          268,
+          269,
+          270,
+          271,
+          272,
+          273,
+          274,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74
         ]
       }
     }
@@ -65,7 +87,7 @@
         "id": "ordered-list-item",
         "x": 3,
         "y": 5,
-        "linksTo": "Focus.de"
+        "linksTo": "Delight Player"
       },
       "02.": {
         "id": "ordered-list-index",
@@ -87,7 +109,7 @@
         "id": "ordered-list-item",
         "x": 3,
         "y": 9,
-        "linksTo": "WebGL Shop"
+        "linksTo": "ACRNM Prototype"
       },
       "04.": {
         "id": "ordered-list-index",
@@ -98,18 +120,40 @@
         "id": "ordered-list-item",
         "x": 3,
         "y": 11,
-        "linksTo": "WebGL Shop"
+        "linksTo": "Model Viewer AR Demo Store"
       },
       "05.": {
         "id": "ordered-list-index",
         "x": 1,
         "y": 13
       },
-      "Old CodeSketch": {
+      "Old 2018 Portfolio": {
         "id": "ordered-list-item",
         "x": 3,
         "y": 13,
-        "linksTo": "WebGL Shop"
+        "linksTo": "Old 2018 Portfolio"
+      },
+      "06.": {
+        "id": "ordered-list-index",
+        "x": 1,
+        "y": 15
+      },
+      "Animation CodeSketch Playground": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 15,
+        "linksTo": "Animation CodeSketch Playground"
+      },
+      "07.": {
+        "id": "ordered-list-index",
+        "x": 1,
+        "y": 17
+      },
+      "Archived Works & Blog": {
+        "id": "ordered-list-item",
+        "x": 3,
+        "y": 17,
+        "linksTo": "https://archive.georgi-nikolov.com/"
       },
       // "BORDER_DEFINITION": {
       //   "indices": [399, 398, 397, 396, 395, 394, 393, 392, 391, 390, 389, 388, 387, 386, 385, 384, 383, 382, 381, 380]
@@ -254,21 +298,164 @@
       },
       "BORDER_DEFINITION": {
         "indices": [
-          24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-          45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-          324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335,
-          305, 306, 307, 308, 309, 310, 311, 312, 313, 314,
-          82, 102, 122, 142, 162, 182, 202, 222, 242, 262,
-          103, 123, 143, 163, 183, 203, 223, 243,
-          116, 136, 156, 176, 196, 216, 236, 256,
-          97, 117, 137, 157, 177, 197, 217, 237, 257, 277,
-          
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          324,
+          325,
+          326,
+          327,
+          328,
+          329,
+          330,
+          331,
+          332,
+          333,
+          334,
+          335,
+          305,
+          306,
+          307,
+          308,
+          309,
+          310,
+          311,
+          312,
+          313,
+          314,
+          82,
+          102,
+          122,
+          142,
+          162,
+          182,
+          202,
+          222,
+          242,
+          262,
+          103,
+          123,
+          143,
+          163,
+          183,
+          203,
+          223,
+          243,
+          116,
+          136,
+          156,
+          176,
+          196,
+          216,
+          236,
+          256,
+          97,
+          117,
+          137,
+          157,
+          177,
+          197,
+          217,
+          237,
+          257,
+          277,
         ]
       }
     }
   },
-  "Focus.de": {
-    "url": "/works/focus-de",
+  "ACRNM Prototype": {
+    "url": "/works/acrnm-prototype",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS",
+        "color": [
+          0.35,
+          0.35,
+          0.35
+        ]
+      },
+      "OPEN": {
+        "x": 15,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "https://acrnm-product-explorer.now.sh/"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/acrnm-website.png",
+        "type": "IMAGE"
+      },
+      "Acronym GmbH Prototype Demo": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 140,
+        "textureXOffset": 0.2
+      },
+      "2020": {
+        "x": 17,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 100,
+        "textureXOffset": 0.6
+      },
+      "I used THREE.js and GLSL for the layout, sliders, cursor": {
+        "x": 1,
+        "y": 16,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "and loader of the website. The rest is built using": {
+        "x": 1,
+        "y": 17,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "vanilla JS for DOM manipulation and custom physics": {
+        "x": 1,
+        "y": 18,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "for interaction and animation.": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+    }
+  },
+  "Delight Player": {
+    "url": "/works/delight-player",
     "entries": {
       "BACK": {
         "x": 1,
@@ -281,9 +468,234 @@
         "y": 7,
         "width": 17,
         "height": 10,
-        "src": "/assets/py.png",
+        "src": "/assets/delight-player-website.png",
         "type": "IMAGE"
-      }
+      },
+      "Delight Player": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 140,
+        "textureXOffset": 0.2
+      },
+      "2019": {
+        "x": 17,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 100,
+        "textureXOffset": 0.6
+      },
+      "DELIGHT Player is the leading regular & VR video player": {
+        "x": 1,
+        "y": 16,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "on the internet today. In 2019 I was part of the team": {
+        "x": 1,
+        "y": 17,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "tasked to bring it onboard on Focus.de and Chip.de, two": {
+        "x": 1,
+        "y": 18,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "leading web news outlets in the German speaking world.": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+    }
+  },
+  "Model Viewer AR Demo Store": {
+    "url": "/works/model-viewer-ar-demo-store",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/delight-player-website.png",
+        "type": "IMAGE"
+      },
+      "Model Viewer AR Demo Store": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 140,
+        "textureXOffset": 0.2
+      },
+      "2020": {
+        "x": 17,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 100,
+        "textureXOffset": 0.6
+      },
+      "I developed this AR demo shop for Apple Quick Look and": {
+        "x": 1,
+        "y": 16,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "ARCore during the first COVID quarantine here in Berlin.": {
+        "x": 1,
+        "y": 17,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "It lets you easily preview furniture models in Augmented": {
+        "x": 1,
+        "y": 18,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "Reality mode from the comfort of your home.": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+    }
+  },
+  "Animation CodeSketch Playground": {
+    "url": "/works/codesketch",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/delight-player-website.png",
+        "type": "IMAGE"
+      },
+      "Animation CodeSketch Playground": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 140,
+        "textureXOffset": 0.2
+      },
+      "2016": {
+        "x": 17,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 100,
+        "textureXOffset": 0.6
+      },
+      "This interactive showcase of my CodePen collection": {
+        "x": 1,
+        "y": 16,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "uses drag interactions and CSS3D for the layout and": {
+        "x": 1,
+        "y": 17,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "WebGL / canvas2d for the animations. I used this as a": {
+        "x": 1,
+        "y": 18,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "tool to explore animation principles and math.": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+    }
+  },
+  "Old 2018 Portfolio": {
+    "url": "/works/2018-portfolio",
+    "entries": {
+      "BACK": {
+        "x": 1,
+        "y": 2,
+        "type": "INDIVIDUAL_CHAR",
+        "linksTo": "PROJECTS"
+      },
+      "IMAGE": {
+        "x": 1,
+        "y": 7,
+        "width": 17,
+        "height": 10,
+        "src": "/assets/delight-player-website.png",
+        "type": "IMAGE"
+      },
+      "Georgi Nikolov Old Portfolio": {
+        "x": 1,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 140,
+        "textureXOffset": 0.2
+      },
+      "2018": {
+        "x": 17,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 100,
+        "textureXOffset": 0.6
+      },
+      "I developed this website with vanilla WebGL as a": {
+        "x": 1,
+        "y": 16,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "personal challenge. The physics and animation are": {
+        "x": 1,
+        "y": 17,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "custom implementation by me. Simple motion blur is": {
+        "x": 1,
+        "y": 18,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "achieved as a postprocessing step.": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
     }
   },
   "MetaView": {
@@ -300,48 +712,51 @@
         "y": 7,
         "width": 17,
         "height": 10,
-        "src": "/assets/nx.png",
+        "src": "/assets/delight-player-website.png",
         "type": "IMAGE"
       },
-      "Meta View": {
+      "Delight MetaView": {
         "x": 1,
         "y": 14,
         "type": "WORD_LINE",
-        "fontSize": 170,
-        "textureXOffset": 0.1
+        "fontSize": 140,
+        "textureXOffset": 0.2
       },
-      "Lorem ipsim dolar sit amet": {
+      "2020": {
+        "x": 17,
+        "y": 14,
+        "type": "WORD_LINE",
+        "fontSize": 100,
+        "textureXOffset": 0.6
+      },
+      "MetaView is an internal project in my company used as a": {
         "x": 1,
         "y": 16,
         "type": "WORD_LINE",
-        "fontSize": 120,
-        "textureXOffset": 0.1
-      }
-    }
-  },
-  "WebGL Shop": {
-    "url": "/works/webgl-shop",
-    "entries": {
-      "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
-        "linksTo": "PROJECTS"
+        "fontSize": 110,
+        "textureXOffset": 0.2,
       },
-      "IMAGE": {
+      "video management system and video analytics tool for our": {
         "x": 1,
-        "y": 7,
-        "width": 17,
-        "height": 10,
-        "src": "/assets/ar-demo.jpg",
-        "type": "IMAGE"
+        "y": 17,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
       },
-      "OPEN": {
+      "Delight Player. It is built using React/Redux and SCSS,": {
         "x": 1,
         "y": 18,
-        "type": "INDIVIDUAL_CHAR",
-        "linksTo": "https://google.de"
-      }
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
+      "but utilises SVG and canvas2d for more complex widgets.": {
+        "x": 1,
+        "y": 19,
+        "type": "WORD_LINE",
+        "fontSize": 110,
+        "textureXOffset": 0.2,
+      },
     }
   }
 }
