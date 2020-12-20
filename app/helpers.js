@@ -6,6 +6,12 @@ import {
 
 import screens from './screens.json'
 
+export const dispatchEvent = (eventName, payload) => {
+  document.dispatchEvent(new CustomEvent(eventName, { detail: payload }))
+}
+
+export const getGUID = () => `_${Math.random().toString(36).substr(2, 9)}`
+
 export const getAllUsedCharactersString = () => Object.entries(screens).reduce((acc, [key, value]) => {
   const appendChar = char => {
     if (!acc.includes(char)) {

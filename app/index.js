@@ -21,6 +21,7 @@ import {
 import {
   getAllUsedCharactersString,
   extractViewFromURL,
+  dispatchEvent,
 } from './helpers'
 
 import {
@@ -71,12 +72,12 @@ let loadProgress = 0
 
 // store.dispatch(setDebugMode(isDebugMode))
 
-document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: {
+dispatchEvent(EVT_ADD_TO_LOAD_QUEUE, {
   type: RESOURCE_FONT,
   fontName: `${FONT_NAME}:400:latin`,
   // Load only font chars we actually use
   text: getAllUsedCharactersString()
-} }))
+})
 
 renderer.shadowMap.enabled = true
 renderer.shadowMap.needsUpdate = true
@@ -144,10 +145,10 @@ function init () {
 }
 
 function onLoadResources (allResources) {
-  const imageEntries = allResources.filter(({ type }) => type === ENTRY_TYPE_IMAGE)
+  const imageEntries = allResources.filter((resource) => resource && resource.type === ENTRY_TYPE_IMAGE)
   imageEntries.forEach(image => texManager.addAtlasEntry(image, image.src))
 
-  document.dispatchEvent(new CustomEvent(EVT_LOADED_TEXTURES, { detail: { imageEntries } }))
+  dispatchEvent(EVT_LOADED_TEXTURES, { imageEntries })
 
   viewA.interactable = true
   viewA.visible = true
@@ -243,7 +244,7 @@ function onNavigation (to) {
 
   viewA.interactable = false
 
-  document.dispatchEvent(new CustomEvent(EVT_TRANSITIONING_START, { detail: { direction } }))
+  dispatchEvent(EVT_TRANSITIONING_START, { direction })
   viewB.visible = true
   viewB.interactable = true
   
@@ -255,7 +256,7 @@ function onNavigation (to) {
     duration: 1000,
     ease: popmotion.easeOut,
     onUpdate: v => {
-      document.dispatchEvent(new CustomEvent(EVT_TRANSITIONING, { detail: { v } }))
+      dispatchEvent(EVT_TRANSITIONING, { v })
       currentQuaternion.slerp(targetQuaternion, v)
       // container.setRotationFromQuaternion(currentQuaternion)
       if (v > 0.5 && !hasSwitchedSides) {
@@ -268,7 +269,7 @@ function onNavigation (to) {
       const temp = viewB
       viewB = viewA
       viewA = temp
-      document.dispatchEvent(new CustomEvent(EVT_TRANSITIONING_END))
+      dispatchEvent(EVT_TRANSITIONING_END)
     }
   })
   
@@ -334,18 +335,18 @@ function makePointLight () {
       pointLight.shadow.mapSize.width = maxTextureSize / 2
       pointLight.shadow.mapSize.height = maxTextureSize / 2
       return pointLight
-    }, 1000)
+    })
 }
 
 function allocateProjectImages () {
   return Object.values(screens).map((value) => {
     return Object.values(value.entries).filter(entry => entry.type === RESOURCE_IMAGE).map(entry => {
       const { src } = entry
-      document.dispatchEvent(new CustomEvent(EVT_ADD_TO_LOAD_QUEUE, { detail: { type: ENTRY_TYPE_IMAGE, src } }))
+      dispatchEvent(EVT_ADD_TO_LOAD_QUEUE, { type: ENTRY_TYPE_IMAGE, src })
       return AllocationManager
         .getInstance()
         .allocate(() => {
-          document.dispatchEvent(new CustomEvent(EVT_ALLOCATE_TEXTURE, { detail: { textureId: src, size: 512 } }))
+          dispatchEvent(EVT_ALLOCATE_TEXTURE, { textureId: src, size: 512 })
         })
     })
   }).flat()

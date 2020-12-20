@@ -3,16 +3,19 @@ import WebFont from 'webfontloader'
 import {
   RESOURCE_IMAGE,
   RESOURCE_FONT,
-  EVT_ADD_TO_LOAD_QUEUE
+  RESOURCE_ALLOCATION,
+  EVT_ADD_TO_LOAD_QUEUE,
+  EVT_ALLOCATION_SUCCESS,
 } from '../constants'
 
 import {
-  loadImage
+  loadImage,
 } from '../helpers'
 
 import store from '../store'
+
 import {
-  setLoadProgress
+  setLoadProgress,
 } from '../store/actions'
 
 export default class LoadManager {
@@ -21,7 +24,8 @@ export default class LoadManager {
 
     document.addEventListener(EVT_ADD_TO_LOAD_QUEUE, this.addResourceToLoad.bind(this))
   }
-  addResourceToLoad ({ detail: entry }) {
+  addResourceToLoad ({ detail: entry } = {}) {
+    console.log(entry)
     this._resourcesToLoad.push(entry)
   }
   loadResources () {
@@ -59,6 +63,18 @@ export default class LoadManager {
               },
               fontinactive: fontName => reject(new Error('Font family failed to load', fontName)),
             })
+          })
+        } else if (resource.type === RESOURCE_ALLOCATION) {
+          return new Promise(resolve => {
+            const onAllocSuccess = ({ detail: allocUID }) => {
+              if (resource.uid && resource.uid === allocUID) {
+                loadedProgress += step
+                store.dispatch(setLoadProgress(loadedProgress))
+                resolve()
+                document.removeEventListener(EVT_ALLOCATION_SUCCESS, onAllocSuccess)  
+              }
+            }
+            document.addEventListener(EVT_ALLOCATION_SUCCESS, onAllocSuccess)
           })
         }
       }))
