@@ -2,12 +2,60 @@
   "ordered-list-index": {
     "type": "WORD_LINE",
     "textureXOffset": 0.3,
-    "fontSize": 150,
-    "color": [0.3, 0.3, 0.3]
+    "fontSize": 50,
+    "color": [
+      0.3,
+      0.3,
+      0.3
+    ]
   },
   "ordered-list-item": {
     "textureXOffset": 0.3,
-    "fontSize": 124,
+    "fontSize": 41.33,
     "type": "WORD_LINE"
+  },
+  "info-paragraph": {
+    "type": "WORD_LINE",
+    "textureXOffset": 0.1,
+    "fontSize": 40
+  },
+  "info-skill": {
+    "type": "WORD_LINE",
+    "textureXOffset": 0.1,
+    "fontSize": 36.66
+  },
+  "back-button": {
+    "x": 1,
+    "y": 2,
+    "type": "INDIVIDUAL_CHAR",
+    "fontSize": 66.667,
+    "color": [
+      0.35,
+      0.35,
+      0.35
+    ]
+  },
+  "homepage-text": {
+    "type": "INDIVIDUAL_CHAR",
+    "fontSize": 66.667,
+  },
+  "project-open": {
+    "type": "INDIVIDUAL_CHAR",
+    "fontSize": 66.667,
+  },
+  "project-title": {
+    "type": "WORD_LINE",
+    "fontSize": 46.66,
+    "textureXOffset": 0.2
+  },
+  "project-year": {
+    "type": "WORD_LINE",
+    "fontSize": 33.33,
+    "textureXOffset": 0.6
+  },
+  "project-body-text": {
+    "type": "WORD_LINE",
+    "fontSize": 36.66,
+    "textureXOffset": 0.2
   }
 }

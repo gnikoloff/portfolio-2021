@@ -14,9 +14,13 @@ import {
   EVT_ALLOCATE_TEXTURE,
 } from '../constants'
 
+import styles from '../label-styles.json'
+
 const IDEAL_TEXTURE_SIZE = 4096
 
 const DRAW_COLOR = 'green'
+
+const styleMap = new Map(Object.entries(styles))
 
 export default class TextureManager {
   constructor ({ size }) {
@@ -26,7 +30,7 @@ export default class TextureManager {
     this._domDebugContainer = document.getElementById('texture-manager-wrapper')
 
     const { canvas, ctx } = this._makeCanvas(TEXTURE_LABEL_ATLAS, size)
-    const entriesPerRow = 20
+    const entriesPerRow = 60
     const cellWidth = size / entriesPerRow
 
     for (let i = 0; i < entriesPerRow * entriesPerRow; i++) {
@@ -62,15 +66,13 @@ export default class TextureManager {
     if (isDebugMode) {
       this._domDebugContainer.style.display = 'block'
     }
+    this._domDebugContainer.style.display = 'block'
 
     document.addEventListener(EVT_ALLOCATE_TEXTURE, this.allocateTexture.bind(this))
 
   }
-  get entriesPerRow () {
-    return entriesPerRow
-  }
   _drawImage (entry, textureId) {
-    const { ctx, entriesPerRow, atlas, texture, cellWidth } = this._textureSet.get(textureId)
+    const { canvas, ctx, entriesPerRow, atlas, cellWidth } = this._textureSet.get(textureId)
 
     const texCoords = []
 
@@ -86,7 +88,7 @@ export default class TextureManager {
 
     ctx.save()
     // ctx.drawImage(image, 0, 0, size, size, 0, 0, canvas.width, canvas.height * 0.8)
-    ctx.drawImage(entry.value, 0, cellWidth * 2)
+    ctx.drawImage(entry.value, 0, cellWidth * 2, canvas.width, entry.value.naturalHeight)
 
     atlas.set(entry.src, texCoords)
 
@@ -110,7 +112,10 @@ export default class TextureManager {
     } = textureData
 
     const texWidthDelta = size / IDEAL_TEXTURE_SIZE
-    const fontSize = (entry.fontSize || 200) * texWidthDelta
+
+    const style = Object.assign({}, entry, styleMap.get(entry.styleID))
+
+    const fontSize = (style.fontSize || 100) * texWidthDelta
 
     const drawX = atlasIdxX * cellWidth
     const drawY = atlasIdxY * cellWidth
@@ -158,10 +163,12 @@ export default class TextureManager {
       atlasIdxX,
       atlasIdxY,
     } = textureData
-
     
     const texWidthDelta = size / IDEAL_TEXTURE_SIZE
-    const fontSize = (entry.fontSize || 120)* texWidthDelta
+    
+    const style = Object.assign({}, entry, styleMap.get(entry.styleID))
+    
+    const fontSize = (style.fontSize || 120) * texWidthDelta
 
     ctx.save()
     ctx.fillStyle = DRAW_COLOR
@@ -233,14 +240,14 @@ export default class TextureManager {
     ctx.translate(drawX + cellWidth / 2, drawY + cellWidth / 2)
     const texWidthDelta = size / IDEAL_TEXTURE_SIZE
     if (entry.type === ENTRY_TYPE_SYMBOL_DOT) {
-      const idealRadius = 32
+      const idealRadius = 32 / 3
       ctx.beginPath()
       ctx.arc(0, 0, idealRadius * texWidthDelta, 0, Math.PI * 2, false)
       ctx.closePath()
       ctx.fill()
     } else if (entry.type === ENTRY_TYPE_SYMBOL_CROSS) {
-      const idealRadius = 50
-      const idealLineWidth = 30
+      const idealRadius = 50 / 3
+      const idealLineWidth = 30 / 3
       const radius = idealRadius * texWidthDelta
       const lineWidth = idealLineWidth * texWidthDelta
       ctx.lineWidth = lineWidth
@@ -253,7 +260,7 @@ export default class TextureManager {
       ctx.lineTo(-radius, radius)
       ctx.stroke()
     } else if (entry.type === ENTRY_TYPE_SYMBOL_SQUARE) {
-      const idealRadius = 100
+      const idealRadius = 100 / 3
       const radius = idealRadius * texWidthDelta
       ctx.strokeRect(-radius / 2, -radius / 2, radius / 2, radius / 2)
     }
@@ -302,6 +309,7 @@ export default class TextureManager {
     return texAtlasCoords
   }
   _makeCanvas (textureId, size) {
+    console.log(textureId)
     const { isDebugMode } = store.getState()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
@@ -310,6 +318,10 @@ export default class TextureManager {
     if (isDebugMode) {
       this._domDebugContainer.appendChild(canvas)
     }
+    if (textureId === TEXTURE_LABEL_ATLAS) {
+      // this._domDebugContainer.appendChild(canvas)
+    }
+    this._domDebugContainer.appendChild(canvas)
     return { canvas, ctx }
   }
   getTexture (textureName) {
@@ -323,7 +335,7 @@ export default class TextureManager {
     const { canvas, ctx } = this._makeCanvas(textureId, size)
     const textureUniformIdx = this._textureSet.size
 
-    const entriesPerRow = 20
+    const entriesPerRow = 60
     const cellWidth = size / entriesPerRow
 
     const texture = new THREE.CanvasTexture(canvas)

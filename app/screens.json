@@ -3,9 +3,9 @@
     "url": "/",
     "entries": {
       "GEORGI NIKOLOV": {
+        "styleID": "homepage-text",
         "x": 3,
         "y": 3,
-        "type": "INDIVIDUAL_CHAR",
         "color": [
           0,
           0,
@@ -16,31 +16,31 @@
         "x": 7,
         "y": 5,
         "type": "WORD_LINE",
-        "fontSize": 120,
+        "fontSize": 40,
         "textureXOffset": 0
       },
       "PROJECTS": {
+        "styleID": "homepage-text",
         "x": 6,
         "y": 9,
-        "type": "INDIVIDUAL_CHAR",
-        "linksTo": "PROJECTS"
+        "linksTo": "PROJECTS",
       },
       "INFO": {
+        "styleID": "homepage-text",
         "x": 8,
         "y": 11,
-        "type": "INDIVIDUAL_CHAR",
         "linksTo": "INFO"
       },
       "SOCIAL": {
+        "styleID": "homepage-text",
         "x": 7,
         "y": 13,
-        "type": "INDIVIDUAL_CHAR",
         "linksTo": "SOCIAL"
       },
       "ARCHIVES": {
+        "styleID": "homepage-text",
         "x": 6,
         "y": 15,
-        "type": "INDIVIDUAL_CHAR",
         "linksTo": "SOCIAL"
       },
       "BORDER_DEFINITION": {
@@ -73,84 +73,82 @@
     "url": "/projects",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "HOME"
       },
       "01.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 5,
       },
       "Delight Player": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 5,
         "linksTo": "Delight Player"
       },
       "02.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 7
       },
       "Delight Player MetaView": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 7,
         "linksTo": "MetaView"
       },
       "03.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 9
       },
       "ACRNM Prototype Demo Store": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 9,
         "linksTo": "ACRNM Prototype"
       },
       "04.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 11
       },
       "Model Viewer AR Demo Store": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 11,
         "linksTo": "Model Viewer AR Demo Store"
       },
       "05.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 13
       },
       "Old 2018 Portfolio": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 13,
         "linksTo": "Old 2018 Portfolio"
       },
       "06.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 15
       },
       "Animation CodeSketch Playground": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 15,
         "linksTo": "Animation CodeSketch Playground"
       },
       "07.": {
-        "id": "ordered-list-index",
+        "styleID": "ordered-list-index",
         "x": 1,
         "y": 17
       },
       "Archived Works & Blog": {
-        "id": "ordered-list-item",
+        "styleID": "ordered-list-item",
         "x": 3,
         "y": 17,
         "linksTo": "https://archive.georgi-nikolov.com/"
@@ -164,94 +162,68 @@
     "url": "/info",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "HOME"
       },
       "I am a frontend developer in Berlin, Germany.": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 4,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 4
       },
       "I specialize in developing rich user interfaces": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 6,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 6
       },
       "and graphics such as websites, apps, VR, AR and 3D": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 7,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 7
       },
       "visualizations and simulations. ": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 8,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 8
       },
       "My daily work consists of developing tools and apps": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 10,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 10
       },
       "using React and Firebase and creating interactive": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 11,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 11
       },
       "graphics with WebGL, SVG and canvas2d.": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 12,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 12
       },
       "I am currently working in Xymatic GmbH, before that": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 14
       },
       "Wonderland Studio in Amsterdam and other agencies.": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 15,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 15
       },
       "SKILLS": {
+        "styleID": "info-paragraph",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 120
+        "y": 17
       },
-      "WebGL GLSL JS SVG Firebase React Vue Node.js Wordpress": {
+      "WebGL GSL JS SVG Firebase React Vue Node.js Wordpress": {
+        "styleID": "info-skill",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 110
+        "y": 18
       },
       "Photoshop Illustrator Animation theory math & principles": {
+        "styleID": "info-skill",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "textureXOffset": 0.1,
-        "fontSize": 110
+        "y": 19
       }
     }
   },
@@ -259,9 +231,7 @@
     "url": "/social",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "HOME"
       },
       "T W I T T E R": {
@@ -386,20 +356,13 @@
     "url": "/works/acrnm-prototype",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
-        "linksTo": "PROJECTS",
-        "color": [
-          0.35,
-          0.35,
-          0.35
-        ]
+        "styleID": "back-button",
+        "linksTo": "PROJECTS"
       },
       "OPEN": {
+        "styleID": "project-open",
         "x": 15,
         "y": 2,
-        "type": "INDIVIDUAL_CHAR",
         "linksTo": "https://acrnm-product-explorer.now.sh/"
       },
       "IMAGE": {
@@ -411,57 +374,49 @@
         "type": "IMAGE"
       },
       "Acronym GmbH Prototype Demo": {
+        "styleID": "project-title",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 140,
-        "textureXOffset": 0.2
+        "y": 14
       },
       "2020": {
+        "styleID": "project-year",
         "x": 17,
         "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 100,
-        "textureXOffset": 0.6
       },
       "I used THREE.js and GLSL for the layout, sliders, cursor": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 16,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 16
       },
       "and loader of the website. The rest is built using": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 17
       },
       "vanilla JS for DOM manipulation and custom physics": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 18
       },
       "for interaction and animation.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
-      },
+        "y": 19
+      }
     }
   },
   "Delight Player": {
     "url": "/works/delight-player",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "PROJECTS"
+      },
+      "OPEN": {
+        "styleID": "project-open",
+        "x": 15,
+        "y": 2,
+        "linksTo": "https://archive.georgi-nikolov.com/project/delight-player"
       },
       "IMAGE": {
         "x": 1,
@@ -472,46 +427,34 @@
         "type": "IMAGE"
       },
       "Delight Player": {
+        "styleID": "project-title",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 140,
-        "textureXOffset": 0.2
+        "y": 14
       },
       "2019": {
+        "styleID": "project-year",
         "x": 17,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 100,
-        "textureXOffset": 0.6
+        "y": 14
       },
       "DELIGHT Player is the leading regular & VR video player": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 16,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 16
       },
       "on the internet today. In 2019 I was part of the team": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 17
       },
       "tasked to bring it onboard on Focus.de and Chip.de, two": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 18
       },
       "leading web news outlets in the German speaking world.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 19
       },
     }
   },
@@ -519,10 +462,14 @@
     "url": "/works/model-viewer-ar-demo-store",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "PROJECTS"
+      },
+      "OPEN": {
+        "styleID": "project-open",
+        "x": 15,
+        "y": 2,
+        "linksTo": "https://archive.georgi-nikolov.com/project/web-ar-furniture-demo"
       },
       "IMAGE": {
         "x": 1,
@@ -533,46 +480,34 @@
         "type": "IMAGE"
       },
       "Model Viewer AR Demo Store": {
+        "styleID": "project-title",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 140,
-        "textureXOffset": 0.2
+        "y": 14
       },
       "2020": {
+        "styleID": "project-year",
         "x": 17,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 100,
-        "textureXOffset": 0.6
+        "y": 14
       },
       "I developed this AR demo shop for Apple Quick Look and": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 16,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 16
       },
       "ARCore during the first COVID quarantine here in Berlin.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 17
       },
       "It lets you easily preview furniture models in Augmented": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 18
       },
       "Reality mode from the comfort of your home.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 19
       },
     }
   },
@@ -580,10 +515,14 @@
     "url": "/works/codesketch",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "PROJECTS"
+      },
+      "OPEN": {
+        "styleID": "project-open",
+        "x": 15,
+        "y": 2,
+        "linksTo": "https://archive.georgi-nikolov.com/project/codesketch"
       },
       "IMAGE": {
         "x": 1,
@@ -594,46 +533,34 @@
         "type": "IMAGE"
       },
       "Animation CodeSketch Playground": {
+        "styleID": "project-title",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 140,
-        "textureXOffset": 0.2
+        "y": 14
       },
       "2016": {
+        "styleID": "project-year",
         "x": 17,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 100,
-        "textureXOffset": 0.6
+        "y": 14
       },
       "This interactive showcase of my CodePen collection": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 16,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 16
       },
       "uses drag interactions and CSS3D for the layout and": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 17
       },
       "WebGL / canvas2d for the animations. I used this as a": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 18
       },
       "tool to explore animation principles and math.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 19
       },
     }
   },
@@ -641,10 +568,14 @@
     "url": "/works/2018-portfolio",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "PROJECTS"
+      },
+      "OPEN": {
+        "styleID": "project-open",
+        "x": 15,
+        "y": 2,
+        "linksTo": "https://2018.georgi-nikolov.com/"
       },
       "IMAGE": {
         "x": 1,
@@ -655,57 +586,49 @@
         "type": "IMAGE"
       },
       "Georgi Nikolov Old Portfolio": {
+        "styleID": "project-title",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 140,
-        "textureXOffset": 0.2
+        "y": 14
       },
       "2018": {
+        "styleID": "project-year",
         "x": 17,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 100,
-        "textureXOffset": 0.6
+        "y": 14
       },
       "I developed this website with vanilla WebGL as a": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 16,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 16
       },
       "personal challenge. The physics and animation are": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 17
       },
       "custom implementation by me. Simple motion blur is": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 18
       },
       "achieved as a postprocessing step.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
-      },
+        "y": 19
+      }
     }
   },
   "MetaView": {
     "url": "/works/meta-view",
     "entries": {
       "BACK": {
-        "x": 1,
-        "y": 2,
-        "type": "INDIVIDUAL_CHAR",
+        "styleID": "back-button",
         "linksTo": "PROJECTS"
+      },
+      "OPEN": {
+        "styleID": "project-open",
+        "x": 15,
+        "y": 2,
+        "linksTo": "https://archive.georgi-nikolov.com/project/delight-player-metaview"
       },
       "IMAGE": {
         "x": 1,
@@ -716,46 +639,34 @@
         "type": "IMAGE"
       },
       "Delight MetaView": {
+        "styleID": "project-title",
         "x": 1,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 140,
-        "textureXOffset": 0.2
+        "y": 14
       },
       "2020": {
+        "styleID": "project-year",
         "x": 17,
-        "y": 14,
-        "type": "WORD_LINE",
-        "fontSize": 100,
-        "textureXOffset": 0.6
+        "y": 14
       },
       "MetaView is an internal project in my company used as a": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 16,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 16
       },
       "video management system and video analytics tool for our": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 17,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 17
       },
       "Delight Player. It is built using React/Redux and SCSS,": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 18,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 18
       },
       "but utilises SVG and canvas2d for more complex widgets.": {
+        "styleID": "project-body-text",
         "x": 1,
-        "y": 19,
-        "type": "WORD_LINE",
-        "fontSize": 110,
-        "textureXOffset": 0.2,
+        "y": 19
       },
     }
   }

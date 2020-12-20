@@ -240,9 +240,7 @@ export default class CubeView {
 
   set visible (visible) {
     if (!visible) {
-      const {
-        texCoordinates
-      } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, TEXTURE_LABEL_ATLAS)
+      const texCoordinates = [-1, -1]
       for (let i = 0; i < this._numBoxes; i++) {
         this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
         this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
@@ -315,11 +313,13 @@ export default class CubeView {
     this._screenData = screenData
     Object.entries(screenData.entries).map(keyValue => {
       const key = keyValue[0]
-      const { x, y, type: ownType } = keyValue[1]
+
+      const style = Object.assign({}, keyValue[1], styleMap.get(keyValue[1].styleID))
+      
+      const { x, y, type } = style
       const startIdx = x + this._radius * (this._radius - y)
 
-      const style = Object.assign({}, keyValue[1], styleMap.get(keyValue[1].id))
-      const { type } = style
+      console.log(x, y, type)
 
       if (key === 'BORDER_DEFINITION') {
         return
@@ -348,11 +348,13 @@ export default class CubeView {
         }
       } else if (type === ENTRY_TYPE_INDIVIDUAL_CHAR) {
         for (let i = startIdx, n = 0; i < startIdx + key.length; i++) {
-          const color = keyValue[1].color || DEFAULT_COLOR
+          const style = Object.assign({}, keyValue[1], styleMap.get(keyValue[1].styleID))
+          const { color = DEFAULT_COLOR } = style
           const entry = {
-            value: key[n], type, fontSize: keyValue[1].fontSize
+            value: key[n], type, fontSize: keyValue[1].fontSize, styleID: keyValue[1].styleID
           }
           // console.log('allocating ENTRY_TYPE_INDIVIDUAL_CHAR texture for ' + key)
+          console.log(entry)
           const {
             textureUniformIdx,
             texCoordinates
@@ -367,9 +369,8 @@ export default class CubeView {
         }
         this._mesh.geometry.attributes.textColor.needsUpdate = true
       } else if (type === ENTRY_TYPE_WORD_LINE) {
-        const color = (style ? style.color : keyValue[1].color) || DEFAULT_COLOR
-        const textureXOffset = style ? style.textureXOffset : keyValue[1].textureXOffset
-        const fontSize = style ? style.fontSize : keyValue[1].fontSize
+        const style = Object.assign({}, keyValue[1], styleMap.get(keyValue[1].styleID))
+        const { color = DEFAULT_COLOR, textureXOffset, fontSize } = style
         
         const entry = {
           value: key,
@@ -378,6 +379,7 @@ export default class CubeView {
           type,
           textureXOffset,
           fontSize,
+          hasBorder: keyValue[1].hasB
         }
         const {
           textureUniformIdx,
@@ -396,8 +398,8 @@ export default class CubeView {
       } else {
         const {
           textureUniformIdx,
-          texCoordinates
         } = this._textureManager.getEntryTexCoordinate({ value: ' ' }, TEXTURE_LABEL_ATLAS)
+        const texCoordinates = [-1, -1]
         for (let i = 0; i < this._numBoxes; i++) {
           this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
           this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
@@ -426,12 +428,12 @@ export default class CubeView {
         //   // this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
         // }
       } else {
-        const hasDecoration = screenData.entries['BORDER_DEFINITION'] && screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
-        if (hasDecoration) {
-          this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
-          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
-          this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
-        }
+        // const hasDecoration = screenData.entries['BORDER_DEFINITION'] && screenData.entries['BORDER_DEFINITION'].indices.some(indice => indice === i)
+        // if (hasDecoration) {
+        //   this._mesh.geometry.attributes.textureIdx.array[i] = textureUniformIdx
+        //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
+        //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2 + 1] = texCoordinates[1]
+        // }
         
         // if (xIdx % 2 === 0 && yIdx % 2 !== 0 ) {
         //   this._mesh.geometry.attributes.textureAtlasOffset.array[i * 2] = texCoordinates[0]
@@ -470,9 +472,8 @@ export default class CubeView {
         Object.entries(this._screenData.entries).forEach(keyValue => {
           const key = keyValue[0]
 
-          const style = Object.assign({}, keyValue[1], styleMap.get(keyValue[1].id))
+          const style = Object.assign({}, keyValue[1], styleMap.get(keyValue[1].styleID))
           const { x, y, type, linksTo } = style
-
 
           if (!linksTo) {
             return
